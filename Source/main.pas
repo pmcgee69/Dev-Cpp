@@ -962,6 +962,8 @@ type
     function ParseParameters(const Parameters: WideString): Integer;
     //procedure Delphi Style
     procedure LoadTheme;
+    procedure ApplyStyleChange;
+    procedure ApplyStyleChangeOnIdle(Sender: TObject; var Done: Boolean);
 
     //Procedure New Screen
     procedure GetProjectHistory;
@@ -3553,15 +3555,37 @@ begin
   end;
       //Load Delphi Style
       if devData.StyleChange then
-      begin
-        if devData.Style > 0 then
-        begin
-          LoadThemeStyle;
-          LoadStyle;
-        end
-        else
-          Loadtheme;
-      end;
+{$IF CompilerVersion >= 35}
+        // Delphi 11 and later: not here but once the application is idle. When the dialog was
+        // opened from the main menu, this still runs inside the styled menu bar's own message loop
+        // (TFormStyleHook.TMainMenuBarStyleHook.ProcessMenuLoop). Switching to the system style
+        // ('Windows') frees every style hook, including the main form's two that this loop is
+        // using, and the loop then calls through them: an access violation on OK. OnIdle runs only
+        // from the application's own message loop, after the menu loop has ended.
+        Application.OnIdle := ApplyStyleChangeOnIdle;
+{$ELSE}
+        // Delphi 10.4 and earlier: here. These don't free the hooks on a style switch, and 10.4's
+        // menu loop releases the main form on any CM_RELEASE it takes, which deferring lets it
+        // take from this dialog (closed with caFree).
+        ApplyStyleChange;
+{$IFEND}
+end;
+
+procedure TMainForm.ApplyStyleChangeOnIdle(Sender: TObject; var Done: Boolean);
+begin
+  Application.OnIdle := nil;
+  ApplyStyleChange;
+end;
+
+procedure TMainForm.ApplyStyleChange;
+begin
+  if devData.Style > 0 then
+  begin
+    LoadThemeStyle;
+    LoadStyle;
+  end
+  else
+    Loadtheme;
 end;
 
 procedure TMainForm.actUpdatePageCount(Sender: TObject);

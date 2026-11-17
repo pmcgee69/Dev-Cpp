@@ -46,9 +46,12 @@ var
   DataStruct: PCopyDataStruct;
 begin
   DataStruct := PCopyDataStruct(Message.LParam);
-  if Assigned(DataStruct) and (DataStruct^.dwData = SENDDATAID) then
-    Result := PChar(DataStruct^.lpData)
-  else
+  // Any process can send WM_COPYDATA: read cbData's length, not up to a terminator that may be missing
+  if Assigned(DataStruct) and (DataStruct^.dwData = SENDDATAID) and Assigned(DataStruct^.lpData) then begin
+    SetString(Result, PChar(DataStruct^.lpData), DataStruct^.cbData div SizeOf(Char));
+    if Pos(#0, Result) > 0 then
+      SetLength(Result, Pos(#0, Result) - 1);
+  end else
     Result := '';
 end;
 
@@ -87,7 +90,7 @@ begin
   Result := True;
 
   // Get its class name (from WNDCLASSEX)
-  if GetClassName(Handle, Buffer, SizeOf(Buffer)) = 0 then
+  if GetClassName(Handle, Buffer, Length(Buffer)) = 0 then // characters, not SizeOf's bytes
     Exit;
   WindowClassName := Buffer;
 
@@ -108,10 +111,13 @@ begin
       Exit;
 
     // Get its module filename
-    if GetModuleFileNameEx(WindowProcess, WindowModule, Buffer, SizeOf(Buffer)) = 0 then
-      Exit;
-    WindowModuleName := Buffer;
-    CloseHandle(WindowProcess); // not needed anymore
+    try
+      if GetModuleFileNameEx(WindowProcess, WindowModule, Buffer, Length(Buffer)) = 0 then
+        Exit;
+      WindowModuleName := Buffer;
+    finally
+      CloseHandle(WindowProcess); // closed on the Exit too: it leaked there
+    end;
 
     // from the "same" application?
     CompareFileName := PString(Param)^;
@@ -138,15 +144,16 @@ begin
   if (UniqueMutex <> 0) and (GetLastError = ERROR_ALREADY_EXISTS) then begin
     //ShowMessage('ERROR_ALREADY_EXISTS');
     // Store our own module filename
-    if GetModuleFileName(GetModuleHandle(nil), Buffer, SizeOf(Buffer)) = 0 then
+    if GetModuleFileName(GetModuleHandle(nil), Buffer, Length(Buffer)) = 0 then // characters
       Exit;
     ThisModuleFileName := Buffer;
 
     // If that's the case, walk all top level windows and find the previous instance
     // At this point, the program that created the mutex might not have created its MainForm yet
     // Temporary fix: try to find the MainForm handle every 100ms
-
-    while True do begin
+    // For 10 seconds: the mutex's owner may be another Dev-C++ executable (another file name),
+    // whose window never matches; "while True" then waited forever. Then: run as a new instance.
+    for var Attempt := 1 to 100 do begin
       if not EnumWindows(@GetPreviousInstanceCallback, LPARAM(PString(@ThisModuleFileName))) then begin
         Result := PreviousInstance;
         Exit;

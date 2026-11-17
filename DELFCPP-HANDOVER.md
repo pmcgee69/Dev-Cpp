@@ -34,7 +34,7 @@ Units in Delf: **IntList** (`2797fce`), **EditorList** (`b3437a0`), **Instances*
 `76f8a86` fixes). Plain fixes on `dev64`: `ca0effe`, `6ea85d8`, `1197288`, `7c9a568`; on both:
 `Utils.SetPath`. 20 errors logged (Claude 17, dcc64 2, test 1, Delf's rules 0).
 
-**Next:** the fourth unit, proposed `VCL\ClassBrowsing\CppTokenizer` (the class browser; uses
+**Next:** CppTokenizer pass 1 is done (`d79bf6b`): read it for bugs, fix on both branches, test. It is the fourth unit, `VCL\ClassBrowsing\CppTokenizer` (the class browser; uses
 IntList's neighbours). Then onward through the class browser (`CppPreprocessor`: its `#if`
 operands are read with 32-bit `StrToIntDef`; `CppParser`).
 

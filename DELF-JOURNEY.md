@@ -1,4 +1,4 @@
-# Dev-C++ into Delf: the journey
+# DelfCpp: the journey (Dev-C++ into Delf)
 
 A log of moving Dev-C++ to 64-bit and then, unit by unit, into **Delf** (Delphi with a stricter
 type system; delfc translates `.delf` to `.pas`). Kept as it happens: what was changed, what

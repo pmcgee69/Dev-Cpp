@@ -1,0 +1,5 @@
+# Build outputs land beside the build scripts
+devcpp-build/
+devcpp-repo64/
+dev64-Win32/
+dev64-Win64/

@@ -1,0 +1,54 @@
+﻿class|StructName|struct||Struct.cpp:5|parent 
+variable|VarA|int||Struct.cpp:6|parent StructName
+variable|VarB|float||Struct.cpp:7|parent StructName
+variable|VarC|bool||Struct.cpp:8|parent StructName
+class|Child|struct||Struct.cpp:9|parent StructName
+variable|ChildVar|float||Struct.cpp:10|parent Child
+class|ClassName|class||Struct.cpp:18|parent 
+variable|PrivVarA|int||Struct.cpp:19|parent ClassName
+variable|ProtVarA|int||Struct.cpp:21|parent ClassName
+variable|VarA|int||Struct.cpp:23|parent ClassName
+variable|VarB|float||Struct.cpp:24|parent ClassName
+variable|VarC|bool||Struct.cpp:25|parent ClassName
+class|Child|struct||Struct.cpp:26|parent ClassName
+variable|ChildVar|float||Struct.cpp:27|parent Child
+class|DerivedClassName|class||Struct.cpp:30|parent 
+variable|VarD|int||Struct.cpp:32|parent DerivedClassName
+class|UnionName|union||Struct.cpp:38|parent 
+class|PartA|struct||Struct.cpp:39|parent UnionName
+variable|PartAVar|int||Struct.cpp:40|parent PartA
+class|PartB|struct||Struct.cpp:42|parent UnionName
+variable|PartBVar|int||Struct.cpp:43|parent PartB
+typedef|UnfinishedClassName|UnfinishedStructName||Struct.cpp:50|parent 
+class|tagRECT|struct||Struct.cpp:55|parent 
+class|RECT|struct||Struct.cpp:60|parent 
+class|PRECT|struct*||Struct.cpp:60|parent 
+class|NPRECT|struct*||Struct.cpp:60|parent 
+class|LPRECT|struct*||Struct.cpp:60|parent 
+variable|left|LONG||Struct.cpp:56|parent tagRECT
+variable|left|LONG||Struct.cpp:56|parent RECT
+variable|left|LONG||Struct.cpp:56|parent PRECT
+variable|left|LONG||Struct.cpp:56|parent NPRECT
+variable|left|LONG||Struct.cpp:56|parent LPRECT
+variable|top|LONG||Struct.cpp:57|parent tagRECT
+variable|top|LONG||Struct.cpp:57|parent RECT
+variable|top|LONG||Struct.cpp:57|parent PRECT
+variable|top|LONG||Struct.cpp:57|parent NPRECT
+variable|top|LONG||Struct.cpp:57|parent LPRECT
+variable|right|LONG||Struct.cpp:58|parent tagRECT
+variable|right|LONG||Struct.cpp:58|parent RECT
+variable|right|LONG||Struct.cpp:58|parent PRECT
+variable|right|LONG||Struct.cpp:58|parent NPRECT
+variable|right|LONG||Struct.cpp:58|parent LPRECT
+variable|bottom|LONG||Struct.cpp:59|parent tagRECT
+variable|bottom|LONG||Struct.cpp:59|parent RECT
+variable|bottom|LONG||Struct.cpp:59|parent PRECT
+variable|bottom|LONG||Struct.cpp:59|parent NPRECT
+variable|bottom|LONG||Struct.cpp:59|parent LPRECT
+typedef|EnumName|enum||Struct.cpp:65|parent 
+enum|A|enum EnumName||Struct.cpp:66|parent 
+enum|B|enum EnumName||Struct.cpp:67|parent 
+enum|C|enum EnumName||Struct.cpp:68|parent 
+enum|D|enum EnumName||Struct.cpp:69|parent 
+enum|E|enum EnumName||Struct.cpp:70|parent 
+function|main|int|()|Struct.cpp:76|parent 

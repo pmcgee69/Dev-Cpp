@@ -1,0 +1,5 @@
+﻿class|DummyClass|class||OperatorTest.cpp:1|parent 
+function|int*|operator|()|OperatorTest.cpp:4|parent DummyClass
+function|int*|operator const|()|OperatorTest.cpp:5|parent DummyClass
+function|int*|operator|()|OperatorTest.cpp:9|parent 
+function|int*|operator const|()|OperatorTest.cpp:11|parent 

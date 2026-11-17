@@ -1,0 +1,25 @@
+﻿class|tagREKT|struct||Typedef.cpp:4|parent 
+class|REKT|struct||Typedef.cpp:9|parent 
+class|PREKT|struct*||Typedef.cpp:9|parent 
+class|NPREKT|struct*||Typedef.cpp:9|parent 
+class|LPREKT|struct*||Typedef.cpp:9|parent 
+variable|left|LONG||Typedef.cpp:5|parent tagREKT
+variable|left|LONG||Typedef.cpp:5|parent REKT
+variable|left|LONG||Typedef.cpp:5|parent PREKT
+variable|left|LONG||Typedef.cpp:5|parent NPREKT
+variable|left|LONG||Typedef.cpp:5|parent LPREKT
+variable|top|LONG||Typedef.cpp:6|parent tagREKT
+variable|top|LONG||Typedef.cpp:6|parent REKT
+variable|top|LONG||Typedef.cpp:6|parent PREKT
+variable|top|LONG||Typedef.cpp:6|parent NPREKT
+variable|top|LONG||Typedef.cpp:6|parent LPREKT
+variable|right|LONG||Typedef.cpp:7|parent tagREKT
+variable|right|LONG||Typedef.cpp:7|parent REKT
+variable|right|LONG||Typedef.cpp:7|parent PREKT
+variable|right|LONG||Typedef.cpp:7|parent NPREKT
+variable|right|LONG||Typedef.cpp:7|parent LPREKT
+variable|bottom|LONG||Typedef.cpp:8|parent tagREKT
+variable|bottom|LONG||Typedef.cpp:8|parent REKT
+variable|bottom|LONG||Typedef.cpp:8|parent PREKT
+variable|bottom|LONG||Typedef.cpp:8|parent NPREKT
+variable|bottom|LONG||Typedef.cpp:8|parent LPREKT

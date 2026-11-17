@@ -23,7 +23,7 @@ set WHICH=%1
 if "%WHICH%"=="" set WHICH=all
 
 rem The units under test, as paths under Source (the original's are taken from git)
-set UNITS=VCL/ClassBrowsing/CppTokenizer.pas
+set UNITS=VCL/ClassBrowsing/CppTokenizer.pas VCL/ClassBrowsing/IntList.pas
 
 rem Every other unit comes from the version's own Source, as devcpp.dproj finds them
 set "SUB=VCL\ClassBrowsing;VCL\SVGIconImageList\Svg;VCL\SVGIconImageList\Source;VCL\devFileMonitor;VCL\devShortcuts;VCL\CompOptionsList;VCL\SynEdit\Source;VCL\vcl-styles-utils\Common;VCL\DDetours\Source"

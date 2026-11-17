@@ -1,0 +1,2 @@
+﻿variable|a|int||IncludeTestA.h:1|parent 
+variable|b|int||IncludeTestB.h:1|parent 

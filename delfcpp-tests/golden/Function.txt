@@ -1,0 +1,26 @@
+﻿function|FunctionDeclDefPair|void|()|Function.h:1|parent 
+function|FunctionA|void|()|Function.cpp:8|parent 
+function|FunctionB|void|(int a, int* p, ...)|Function.cpp:10|parent 
+function|FunctionC|void|(const char* arg = "Hello")|Function.cpp:12|parent 
+function|FunctionD|void|(int a)|Function.cpp:14|parent 
+class|DummyClass|class||Function.cpp:19|parent 
+function|PrivateMemberFunction|void|()|Function.cpp:21|parent DummyClass
+function|ProtectedMemberFunction|void|()|Function.cpp:23|parent DummyClass
+constructor|DummyClass|DummyClass|()|Function.cpp:26|parent DummyClass
+destructor|~DummyClass|DummyClass|()|Function.cpp:27|parent DummyClass
+function|PublicMemberFunction|void|()|Function.cpp:28|parent DummyClass
+function|int*|operator|()|Function.cpp:31|parent DummyClass
+function|int*|operator const|()|Function.cpp:32|parent DummyClass
+function|operator +=|DummyClass&|(const DummyClass& v)|Function.cpp:35|parent DummyClass
+function|operator -=|DummyClass&|(const DummyClass& v)|Function.cpp:36|parent DummyClass
+function|operator *=|DummyClass&|(const DummyClass& v)|Function.cpp:37|parent DummyClass
+function|operator /=|DummyClass&|(const DummyClass& v)|Function.cpp:38|parent DummyClass
+function|operator +|DummyClass|()|Function.cpp:41|parent DummyClass
+function|operator -|DummyClass|()|Function.cpp:42|parent DummyClass
+function|operator *|DummyClass|()|Function.cpp:43|parent DummyClass
+function|operator /|DummyClass|(int)|Function.cpp:44|parent DummyClass
+function|operator ==|bool|(const DummyClass& v)|Function.cpp:47|parent DummyClass
+function|operator !=|bool|(const DummyClass& v)|Function.cpp:48|parent DummyClass
+function|int*|operator|()|Function.cpp:63|parent 
+function|int*|operator const|()|Function.cpp:65|parent 
+function|main|int|()|Function.cpp:94|parent 

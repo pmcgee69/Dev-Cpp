@@ -1,0 +1,17 @@
+﻿variable|Correct01|int||Preprocessor.cpp:3|parent 
+variable|Correct02|int||Preprocessor.cpp:10|parent 
+variable|Correct03|int||Preprocessor.cpp:19|parent 
+preprocessor|PI|||Preprocessor.cpp:25|parent 
+variable|Correct04|int||Preprocessor.cpp:29|parent 
+preprocessor|A|||Preprocessor.cpp:35|parent 
+preprocessor|B|||Preprocessor.cpp:36|parent 
+variable|Correct05|int||Preprocessor.cpp:38|parent 
+variable|Correct07|int||Preprocessor.cpp:45|parent 
+variable|Correct08|int||Preprocessor.cpp:52|parent 
+preprocessor|UndefA|||Preprocessor.cpp:58|parent 
+preprocessor|UndefB|||Preprocessor.cpp:59|parent 
+variable|Correct09|int||Preprocessor.cpp:62|parent 
+variable|Correct10|int||Preprocessor.cpp:73|parent 
+preprocessor|OrA|||Preprocessor.cpp:77|parent 
+variable|Correct11|int||Preprocessor.cpp:79|parent 
+function|main|int|()|Preprocessor.cpp:84|parent 

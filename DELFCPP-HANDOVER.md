@@ -59,7 +59,7 @@ operands are read with 32-bit `StrToIntDef`; `CppParser`).
 ## The per-unit recipe
 
 0. **Tests first** (the user): add a `delfcpp-tests\Test.<Unit>.pas` (DUnitX) that pins what the
-   unit does now (category Characterization), run `delfcpp-testsun-tests.cmd`. Each bug fixed
+   unit does now (category Characterization), run `delfcpp-tests\run-tests.cmd`. Each bug fixed
    later gets a Regression test that fails on the original. The same test files go on both
    branches; one source tests the original, `dev64` and Delf (by unit path), Win32 and Win64.
    Add the unit's original path to `UNITS` in `run-tests.cmd`. Prefer pure functions to test.

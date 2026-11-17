@@ -230,22 +230,32 @@ end;
 
 procedure TCppTokenizer.SkipDoubleQuotes;
 begin
-  repeat
-    Inc(pCurrent);
-    if pCurrent^ = '\' then
-      Inc(pCurrent, 2); // skip escaped char
-  until CharInSet(pCurrent^, ['"', #0]);
-  Inc(pCurrent);
+  // Was: repeat Inc; if '\' then Inc 2 until quote. The Inc 2 could step over the text's
+  // terminating #0, as could the final Inc on an unterminated literal: both read on past the
+  // end. And after an escape the next Inc skipped a character, so "\\\\" lost its closing quote.
+  Inc(pCurrent); // skip the opening quote
+  while not CharInSet(pCurrent^, ['"', #0]) do
+    if (pCurrent^ = '\') and ((pCurrent + 1)^ <> #0) then
+      Inc(pCurrent, 2) // skip escaped char
+    else
+      Inc(pCurrent);
+  if pCurrent^ <> #0 then
+    Inc(pCurrent); // skip the closing quote
 end;
 
 procedure TCppTokenizer.SkipSingleQuote;
 begin
-  repeat
-    Inc(pCurrent);
-    if pCurrent^ = '\' then
-      Inc(pCurrent, 2); // skip escaped quote
-  until CharInSet(pCurrent^, ['''', #0]);
-  Inc(pCurrent);
+  // Was: repeat Inc; if '\' then Inc 2 until quote. The Inc 2 could step over the text's
+  // terminating #0, as could the final Inc on an unterminated literal: both read on past the
+  // end. And after an escape the next Inc skipped a character, so "\\\\" lost its closing quote.
+  Inc(pCurrent); // skip the opening quote
+  while not CharInSet(pCurrent^, ['''', #0]) do
+    if (pCurrent^ = '\') and ((pCurrent + 1)^ <> #0) then
+      Inc(pCurrent, 2) // skip escaped quote
+    else
+      Inc(pCurrent);
+  if pCurrent^ <> #0 then
+    Inc(pCurrent); // skip the closing quote
 end;
 
 procedure TCppTokenizer.SkipPair(cStart, cEnd: Char; FailChars: TSysCharSet); // e.g.: SkipPair('[', ']');
@@ -463,8 +473,9 @@ begin
               Inc(tmp);
           until CharInSet(pCurrent^, [#0, ']'] + DefLineChars);
           Dec(tmp);
-        until tmp = 0;
-        Inc(pCurrent);
+        until (tmp = 0) or (pCurrent^ = #0); // was: until tmp = 0, which went on past the end
+        if pCurrent^ <> #0 then // was: Inc past the end on "a[" at the end of the text
+          Inc(pCurrent);
         CatString(Result, Offset, pCurrent - Offset);
         SkipToNextToken;
       until pCurrent^ <> '['; // maybe multi-dimension array

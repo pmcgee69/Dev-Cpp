@@ -17,6 +17,22 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 }
 
+{ Delf version (Dev-C++, 2026). delfc writes EditorList.pas from this file: edit this one.
+  What changed from the Delphi original, and why:
+  - TLayoutShowType is scoped (Delf's enums are). The constants after it keep the unscoped
+    names for the plain Delphi units that use them (Tests.pas): one type, two spellings.
+    Inside this unit the values are written in full.
+  - GetVisibleEditors gave the left editor as the right one too, in a split view
+    (GetEditor(-1, fLeftPageControl) twice): after the editor options change, main.pas
+    repainted the left editor twice and the right one not at all.
+  - Each case on the layout is a match: every layout is covered, and the else arms that
+    could not be reached are gone.
+  - No with in GetPreviousEditor.
+  - GetEditorFromTag stops at the first match (it searched the right pages after a find).
+  Flagged, not changed: CloseEditor returns True for an editor marked InProject that the
+  project's unit list doesn't hold, without closing it; CloseAll's "while PageCount > 0"
+  would then never end. }
+
 unit EditorList;
 
 interface
@@ -26,7 +42,18 @@ uses
   devrun, version, project, utils, ProjectTypes, Classes, Graphics, Math, Messages;
 
 type
+  {$SCOPEDENUMS ON}
   TLayoutShowType = (lstNone, lstLeft, lstRight, lstBoth);
+  {$SCOPEDENUMS OFF}
+
+const
+  // The unscoped names, for plain Delphi users of this unit
+  lstNone = TLayoutShowType.lstNone;
+  lstLeft = TLayoutShowType.lstLeft;
+  lstRight = TLayoutShowType.lstRight;
+  lstBoth = TLayoutShowType.lstBoth;
+
+type
   TEditorList = class
   private
     fLayout: TLayoutShowType;
@@ -76,6 +103,17 @@ implementation
 uses
   System.UItypes, main, MultiLangSupport, DataFrm;
 
+{ The else of an exhaustive match (SPEC §9.3): unreachable from Delf code, which checks every
+  value is covered. noreturn tells dcc32 so, and removes W1035 (experiment 20). }
+procedure __dpp_Unreachable(const TypeName: string; Ordinal: Integer); noreturn;
+begin
+  // the ordinal, not the name: GetEnumName reads past its table for a
+  // corrupt value (experiment 27)
+  raise EInvalidOpException.CreateFmt('Delf: a match met %s ordinal %d, '
+    + 'which it does not cover', [TypeName, Ordinal]);
+end;
+
+
 function TEditorList.GetPageCount: integer;
 begin
   Result := fLeftPageControl.PageCount + fRightPageControl.PageCount;
@@ -98,29 +136,17 @@ begin
 end;
 
 function TEditorList.GetFocusedPageControl: TPageControl;
-var
-  ActivePage: TTabSheet;
 begin
   case fLayout of
-    lstLeft: begin
-        Result := fLeftPageControl
-      end;
-    lstRight: begin
+    TLayoutShowType.lstLeft  : Result := fLeftPageControl;
+    TLayoutShowType.lstRight : Result := fRightPageControl;
+    TLayoutShowType.lstBoth  : if TEditor(fRightPageControl.ActivePage.Tag).Text.Focused then
         Result := fRightPageControl
-      end;
-    lstBoth: begin
-        // Check if right is focused, otherwise assume left one is focused
-        ActivePage := fRightPageControl.ActivePage;
-        if TEditor(ActivePage.Tag).Text.Focused then
-          Result := fRightPageControl
-        else
-          Result := fLeftPageControl; // no focus -> left one
-      end;
-    lstNone: begin
-        Result := nil;
-      end;
+      else
+        Result := fLeftPageControl;
+    TLayoutShowType.lstNone  : Result := nil;
   else
-    Result := nil;
+    __dpp_Unreachable('TLayoutShowType', Ord(fLayout));
   end;
 end;
 
@@ -142,23 +168,15 @@ begin
   Result := nil;
 end;
 
-function TEditorList.GetNewEditorPageControl;
+function TEditorList.GetNewEditorPageControl: TPageControl;
 begin
   case fLayout of
-    lstNone: begin
-        Result := fLeftPageControl; // first editor should be shown in the leftmost control
-      end;
-    lstLeft: begin
-        Result := fLeftPageControl;
-      end;
-    lstRight: begin
-        Result := fRightPageControl;
-      end;
-    lstBoth: begin
-        Result := GetFocusedPageControl; // depends on the current keyboard focus
-      end;
+    TLayoutShowType.lstNone  : Result := fLeftPageControl;
+    TLayoutShowType.lstLeft  : Result := fLeftPageControl;
+    TLayoutShowType.lstRight : Result := fRightPageControl;
+    TLayoutShowType.lstBoth  : Result := GetFocusedPageControl;
   else
-    Result := nil;
+    __dpp_Unreachable('TLayoutShowType', Ord(fLayout));
   end;
 end;
 
@@ -231,12 +249,11 @@ begin
   if not Assigned(SelectedPageControl) then
     Exit;
 
-  // Select tab in selected pagecontrol
-  case PageIndex of
-    -1: TabSheet := SelectedPageControl.ActivePage;
+  // Select tab in selected pagecontrol: -1 is the active one
+  if PageIndex = -1 then
+    TabSheet := SelectedPageControl.ActivePage
   else
     TabSheet := SelectedPageControl.Pages[PageIndex];
-  end;
   if not Assigned(TabSheet) then
     Exit;
 
@@ -256,44 +273,39 @@ begin
 
   // Determine what to view next
   EditorPageControl := Editor.PageControl;
-  if assigned(EditorPageControl) then
-  with EditorPageControl do begin
+  if not Assigned(EditorPageControl) then
+    Exit;
 
-    // If we are closing the active tab, open the tab that was opened when this tab was created
-    if ActivePage = Editor.TabSheet then begin // this is the current page...
+  // If we are not closing the active tab, don't change focus
+  if EditorPageControl.ActivePage <> Editor.TabSheet then begin
+    Result := GetEditor(-1, EditorPageControl);
+    Exit;
+  end;
 
-      // Find the first tab in the history list that is still open
-      for I := Editor.PreviousEditors.Count - 1 downto 0 do begin
-        e := GetEditorFromTag(NativeInt(Editor.PreviousEditors[i]));
-        if Assigned(e) then begin
-          Result := e;
-          Exit;
-        end;
-      end;
-
-      // All history items are gone or this was the first tab to open which has no history
-      // Select the editor that would appear naturally when closing this one
-      PrevNaturalPage := FindNextPage(Editor.TabSheet, False, True);
-      if Assigned(PrevNaturalPage) and (PrevNaturalPage <> Editor.TabSheet) then begin
-        Result := GetEditor(PrevNaturalPage.TabIndex, EditorPageControl);
-        Exit;
-      end;
-
-      // All editors in the current page control are gone. Try the other page control
-      if fLayout = lstBoth then begin
-        if EditorPageControl = LeftPageControl then begin
-          Result := GetEditor(-1, RightPageControl);
-          Exit;
-        end else begin
-          Result := GetEditor(-1, LeftPageControl);
-          Exit;
-        end;
-      end;
-
-      // If we are not closing the active tab, don't change focus
-    end else begin
-      Result := GetEditor(-1, EditorPageControl);
+  // We are closing the active tab: open the tab that was open when this tab was created.
+  // Find the first tab in the history list that is still open
+  for I := Editor.PreviousEditors.Count - 1 downto 0 do begin
+    e := GetEditorFromTag(NativeInt(Editor.PreviousEditors[i]));
+    if Assigned(e) then begin
+      Result := e;
+      Exit;
     end;
+  end;
+
+  // All history items are gone or this was the first tab to open which has no history
+  // Select the editor that would appear naturally when closing this one
+  PrevNaturalPage := EditorPageControl.FindNextPage(Editor.TabSheet, False, True);
+  if Assigned(PrevNaturalPage) and (PrevNaturalPage <> Editor.TabSheet) then begin
+    Result := GetEditor(PrevNaturalPage.TabIndex, EditorPageControl);
+    Exit;
+  end;
+
+  // All editors in the current page control are gone. Try the other page control
+  if fLayout = TLayoutShowType.lstBoth then begin
+    if EditorPageControl = LeftPageControl then
+      Result := GetEditor(-1, RightPageControl)
+    else
+      Result := GetEditor(-1, LeftPageControl);
   end;
 end;
 
@@ -331,10 +343,10 @@ begin
       end;
     end;
   end;
-  
+
   // Select editor to open when this one closes
-  PrevEditor := GetPreviousEditor(Editor);    
-  
+  PrevEditor := GetPreviousEditor(Editor);
+
   if PrevEditor = Editor then
     PrevEditor := nil;
   BeginUpdate;
@@ -343,6 +355,7 @@ begin
     Result := True;
     if Editor.InProject and Assigned(MainForm.Project) then begin
       projindex := MainForm.Project.Units.IndexOf(Editor);
+      // Flagged: when it is -1 nothing is closed, yet the result is True (see the top)
       if projindex <> -1 then
       begin
         MainForm.Project.CloseUnit(projindex); // calls ForceCloseEditor
@@ -353,7 +366,7 @@ begin
       // Force layout update when creating, destroying or moving editors
       UpdateLayout;
     end;
-    
+
     // Show new editor after forcing a layout update
     if Assigned(PrevEditor) then
       PrevEditor.Activate;
@@ -474,20 +487,14 @@ begin
   result := nil;
 
   // First, check wether the file is already open
-  for I := 0 to fLeftPageControl.PageCount - 1 do begin
-    if fLeftPageControl.Pages[i].Tag = tag then begin
-      result := TEditor(fLeftPageControl.Pages[i].Tag);
-      break;
-    end;
-  end;
+  for I := 0 to fLeftPageControl.PageCount - 1 do
+    if fLeftPageControl.Pages[i].Tag = tag then
+      Exit(TEditor(fLeftPageControl.Pages[i].Tag));
 
   // Same for the right page control
-  for I := 0 to fRightPageControl.PageCount - 1 do begin
-    if fRightPageControl.Pages[i].Tag = tag then begin
-      result := TEditor(fRightPageControl.Pages[i].Tag);
-      break;
-    end;
-  end;
+  for I := 0 to fRightPageControl.PageCount - 1 do
+    if fRightPageControl.Pages[i].Tag = tag then
+      Exit(TEditor(fRightPageControl.Pages[i].Tag));
 end;
 
 function TEditorList.SwapEditor(Editor: TEditor): boolean;
@@ -526,13 +533,13 @@ end;
 procedure TEditorList.UpdateLayout;
 begin
   if (fLeftPageControl.PageCount = 0) and (fRightPageControl.PageCount = 0) then
-    ShowLayout(lstNone)
+    ShowLayout(TLayoutShowType.lstNone)
   else if (fLeftPageControl.PageCount > 0) and (fRightPageControl.PageCount = 0) then
-    ShowLayout(lstLeft)
+    ShowLayout(TLayoutShowType.lstLeft)
   else if (fLeftPageControl.PageCount = 0) and (fRightPageControl.PageCount > 0) then
-    ShowLayout(lstRight)
-  else if (fLeftPageControl.PageCount > 0) and (fRightPageControl.PageCount > 0) then
-    ShowLayout(lstBoth);
+    ShowLayout(TLayoutShowType.lstRight)
+  else
+    ShowLayout(TLayoutShowType.lstBoth);
 end;
 
 procedure TEditorList.ShowLayout(Layout: TLayoutShowType);
@@ -543,57 +550,58 @@ begin
 
   // Apply widths if layout does not change
   case fLayout of
-    lstLeft: begin
+    TLayoutShowType.lstLeft  :
+      begin
         fLeftPageControl.Align := alClient;
         fLeftPageControl.Visible := True;
-
         // Hide other components
         fRightPageControl.Visible := False;
         fRightPageControl.Width := 0;
         fSplitter.Visible := False;
         fSplitter.Width := 0;
       end;
-    lstRight: begin
+    TLayoutShowType.lstRight :
+      begin
         fRightPageControl.Align := alClient;
         fRightPageControl.Visible := True;
-
         // Hide other components
         fLeftPageControl.Visible := False;
         fLeftPageControl.Width := 0;
         fSplitter.Visible := False;
         fSplitter.Width := 0;
       end;
-    lstBoth: begin
+    TLayoutShowType.lstBoth  :
+      begin
         // Align to the left, assign 50% area
         fLeftPageControl.Align := alClient;
         fLeftPageControl.Visible := True;
         fLeftPageControl.Width := (fPanel.Width - 3) div 2;
         fLeftPageControl.Left := 0;
-
         // Put splitter in between
         fSplitter.Align := alRight;
         fSplitter.Visible := True;
         fSplitter.Width := 3;
         fSplitter.Left := fLeftPageControl.Width;
-
         // Align other one to the right
         fRightPageControl.Align := alRight;
         fRightPageControl.Visible := True;
         fRightPageControl.Width := (fPanel.Width - 3) div 2;
         fRightPageControl.Left := fLeftPageControl.Width + 3;
       end;
-    lstNone: begin
+    TLayoutShowType.lstNone  :
+      begin
         fLeftPageControl.Visible := False;
         fLeftPageControl.Width := 0;
         fRightPageControl.Visible := False;
         fRightPageControl.Width := 0;
         fSplitter.Visible := False;
         fSplitter.Width := 0;
-
         // Normally, change events are triggered by editor focus, but since there's no one left, fake it
         // Notify of change AFTER we change the official layout
         fLeftPageControl.OnChange(fLeftPageControl);
       end;
+  else
+    __dpp_Unreachable('TLayoutShowType', Ord(fLayout));
   end;
 end;
 
@@ -618,22 +626,29 @@ end;
 procedure TEditorList.GetVisibleEditors(var Left: TEditor; var Right: TEditor);
 begin
   case fLayout of
-    lstNone: begin
+    TLayoutShowType.lstNone  :
+      begin
         Left := nil;
         Right := nil;
       end;
-    lstLeft: begin
+    TLayoutShowType.lstLeft  :
+      begin
         Left := GetEditor(-1, fLeftPageControl);
         Right := nil;
       end;
-    lstRight: begin
+    TLayoutShowType.lstRight :
+      begin
         Left := nil;
         Right := GetEditor(-1, fRightPageControl);
       end;
-    lstBoth: begin
+    TLayoutShowType.lstBoth  :
+      begin
         Left := GetEditor(-1, fLeftPageControl);
-        Right := GetEditor(-1, fLeftPageControl);
+        Right := GetEditor(-1, fRightPageControl);
+        // was fLeftPageControl
       end;
+  else
+    __dpp_Unreachable('TLayoutShowType', Ord(fLayout));
   end;
 end;
 
@@ -646,16 +661,13 @@ begin
 end;
 
 procedure TEditorList.OnPanelResize(Sender: TObject);
-//var
-//  LeftPageWidthPercent : integer;
 begin
-  if fLayout = lstBoth then begin
+  if fLayout = TLayoutShowType.lstBoth then begin
     // Force 50% layout
     // TODO: better option would be to remember pagecontrol width percentages of parent panel
-    fLayout := lstNone;
-    ShowLayout(lstBoth);
+    fLayout := TLayoutShowType.lstNone;
+    ShowLayout(TLayoutShowType.lstBoth);
   end;
 end;
 
 end.
-

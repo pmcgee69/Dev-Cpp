@@ -649,7 +649,6 @@ end;
 
 procedure SetPath(const Add: String; UseOriginal: boolean = TRUE);
 var
-  OldPath: array[0..2048] of char;
   NewPath: String;
 begin
   NewPath := Add;
@@ -666,8 +665,9 @@ begin
   if UseOriginal then
     NewPath := NewPath + devDirs.OriginalPath
   else begin
-    GetEnvironmentVariable(PChar('PATH'), @OldPath, SizeOf(OldPath));
-    NewPath := NewPath + String(OldPath);
+    // SysUtils' string version: the array this read into held 2,049 characters but was given
+    // as SizeOf, 4,098, so a PATH of 2,049..4,097 overran it, and a longer one appended junk
+    NewPath := NewPath + Sysutils.GetEnvironmentVariable('PATH');
   end;
 
   SetEnvironmentVariable(PChar('PATH'), PChar(NewPath));

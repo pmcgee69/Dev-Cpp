@@ -38,13 +38,13 @@ vcl-styles-utils, DDetours, Abbrevia) and the separate tools (Packman, PackMaker
 ¹ Includes the generated `IntList.pas` (431 lines). Units in Delf so far: **1 of 106** (418 of
 ~56,750 lines, 0.7%).
 
-## The units
+## Files attacked
 
 | # | Unit | Lines (before → `.delf`) | `delf-units` | `dev64` | Checked by |
 |---|---|---|---|---|---|
 | 1 | `VCL\ClassBrowsing\IntList` | 445 → 418 | `2797fce` | `ca0effe` | Differential test, 1.2M operations, Win32 + Win64; class browser in the 64-bit build |
 
-## Bugs found
+## Errors found
 
 **Found by**: *Claude* (reading the code, while porting or rewriting), *Delf* (a Delf rule or
 delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test showed it).
@@ -70,7 +70,15 @@ arm is now written (*Delf*; `dev64` states it too).
 **Tally so far:** Claude 9, dcc64 2, Delf 0 (one rule made a correct case explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
-## What it cost, and what Delf learned
+## Fixes (beyond the errors)
+
+Changes made while a unit was rewritten that fix no bug but remove a hazard or a smell.
+
+- **IntList**: a dynamic array, not `ReallocMem` behind a pointer to an array of `MaxInt div 32`
+  items (no pointer arithmetic, no casts; frees itself); no `with`; `FUpdateCount`, never set,
+  removed; `Error` marked `noreturn`; `Add`'s duplicate rule a `match` over every value.
+
+## Lessons
 
 - **Scoped enumerations leave the unit** (IntList has none; `EditorList` will). A plain Delphi
   caller using `lstLeft` must write `TLayoutShowType.lstLeft`. The rename is not invisible to
@@ -79,6 +87,21 @@ part has been the occasion: rewriting a unit means reading all of it.
   wrote it. So the generated `.pas` is committed exactly as written; nothing normalises it.
 - **The build**: `Source\DelfUnits.cmd`, the `.dproj`'s pre-build event, runs delfc when
   `DELF_POC` is set; otherwise the committed `.pas` is built. Dev-C++ builds without Delf.
+
+## Takeaways
+
+Updated as units land; the short version of what this project shows.
+
+1. **So far Delf's value is the occasion, not the rules.** Rewriting a unit means reading all
+   of it, and that found IntList's four bugs; no Delf rule flagged one. The rules that would
+   have are listed in Delf's `docs/devcpp-delf-todo.md` §2.
+2. **A differential test is what makes a rewrite safe.** Old and new side by side under random
+   operations: it proved IntList unchanged, and measured the original's Win64 crash.
+3. **Delf's changes reach past the file.** Scoped enums break plain callers; constant aliases
+   (tested) keep the interface while the unit is migrated.
+4. **Win64 is where old Delphi breaks quietly**: casts of pointers to `Integer`, x86 assembler
+   that still assembles, 1-byte `Boolean` callbacks. Two of eleven errors the compiler refused;
+   the rest compiled.
 
 ## Log
 

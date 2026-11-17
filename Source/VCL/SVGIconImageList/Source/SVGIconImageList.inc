@@ -133,6 +133,27 @@
   {$DEFINE D11+}
 {$ENDIF}
 
+// Delphi 12 Athens, 13 Florence and later: the table above stops at 11 (VER350), so a
+// later compiler got none of these, no HiDPISupport, and no published Scaled property
+// (Dev-C++: "Error reading SVGImageListMenuStyle.Scaled: Property Scaled does not exist")
+{$IF CompilerVersion >= 36}
+  {$DEFINE D2010+}
+  {$DEFINE DXE+}
+  {$DEFINE DXE2+}
+  {$DEFINE DXE3+}
+  {$DEFINE DXE4+}
+  {$DEFINE DXE5+}
+  {$DEFINE DXE6+}
+  {$DEFINE DXE7+}
+  {$DEFINE DXE8+}
+  {$DEFINE D10_0+}
+  {$DEFINE D10_1+}
+  {$DEFINE D10_2+}
+  {$DEFINE D10_3+}
+  {$DEFINE D10_4+}
+  {$DEFINE D11+}
+{$IFEND}
+
 {$IFDEF D10_3+}
   {$Define HiDPISupport}
 {$ENDIF}

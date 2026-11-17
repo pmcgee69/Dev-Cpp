@@ -64,8 +64,15 @@ type
     fCodePop: TMenuItem;
     fCodeEvent: TNotifyEvent;
     fCodeOffset: byte;
+    // The SVG lists' design sizes (at 96 dpi), read once from the .dfm. A data
+    // module is never told of a DPI change, so the lists are scaled by hand.
+    fSVGBaseSizes: array of record
+      List: TSVGIconImageList;
+      Width, Height: Integer;
+    end;
     procedure LoadCodeIns;
   public
+    procedure ScaleImageLists(const PPI: Integer);
     property CodeMenu: TMenuItem read fCodeMenu write fCodeMenu;
     property CodePop: TMenuItem read fCodePop write fCodePop;
     property CodeClick: TNotifyEvent read fCodeEvent write fCodeEvent;
@@ -112,16 +119,57 @@ const
 implementation
 
 uses
-  devcfg, utils, version, math, MultiLangSupport;
+  Winapi.Windows, devcfg, utils, version, math, MultiLangSupport;
 
 {$R *.dfm}
 
 { TdmMain }
 
 procedure TdmMain.DataModuleCreate(Sender: TObject);
+const
+  cCount = 5;
+var
+  Lists: array[0..cCount - 1] of TSVGIconImageList;
+  I: Integer;
 begin
   fMRU := TList.Create;
   fCodeList := TCodeInsList.Create;
+
+  Lists[0] := SVGImageListMenuStyle;
+  Lists[1] := SVGImageListProjectStyle;
+  Lists[2] := SVGImageListClassStyle;
+  Lists[3] := SVGImageListMessageStyle;
+  Lists[4] := SVGIconImageWelcomeScreen;
+  SetLength(fSVGBaseSizes, cCount);
+  for I := 0 to cCount - 1 do
+  begin
+    fSVGBaseSizes[I].List   := Lists[I];
+    fSVGBaseSizes[I].Width  := Lists[I].Width;
+    fSVGBaseSizes[I].Height := Lists[I].Height;
+  end;
+end;
+
+// Sizes every SVG list for a form at PPI dots per inch: 19 px at 96 dpi
+// becomes 38 px at 192 (200%). SVG redraws sharp at any size.
+procedure TdmMain.ScaleImageLists(const PPI: Integer);
+var
+  I, W, H: Integer;
+begin
+  for I := 0 to High(fSVGBaseSizes) do
+  begin
+    var List := fSVGBaseSizes[I].List;
+    W := MulDiv(fSVGBaseSizes[I].Width,  PPI, 96);
+    H := MulDiv(fSVGBaseSizes[I].Height, PPI, 96);
+    if (List.Width = W) and (List.Height = H) then
+      Continue;
+    if W = H then
+      List.Size := W
+    else
+    begin
+      List.Width  := W;
+      List.Height := H;
+    end;
+  end;
 end;
 
 procedure TdmMain.DataModuleDestroy(Sender: TObject);

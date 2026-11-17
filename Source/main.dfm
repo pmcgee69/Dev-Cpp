@@ -152,6 +152,7 @@ object MainForm: TMainForm
   OldCreateOrder = False
   Position = poScreenCenter
   ShowHint = True
+  OnAfterMonitorDpiChanged = FormAfterMonitorDpiChanged
   OnClose = FormClose
   OnContextPopup = FormContextPopup
   OnCreate = FormCreate

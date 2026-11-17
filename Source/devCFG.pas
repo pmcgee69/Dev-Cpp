@@ -579,6 +579,7 @@ type
     fToolbarMain: boolean; // These ones follow the enable/x-offset/y-offset patern
     fToolbarMainX: integer;
     fToolbarMainY: integer;
+    fToolbarIconSize: integer; // toolbar icons, px at 96 dpi; dragged with the grip under the toolbars
     fToolbarEdit: boolean;
     fToolbarEditX: integer;
     fToolbarEditY: integer;
@@ -695,6 +696,7 @@ type
     property CompCols: String read fCompCols write fCompCols;
 
     //Toolbars
+    property ToolbarIconSize: integer read fToolbarIconSize write fToolbarIconSize;
     property ToolbarMain: boolean read fToolbarMain write fToolbarMain;
     property ToolbarMainX: integer read fToolbarMainX write fToolbarMainX;
     property ToolbarMainY: integer read fToolbarMainY write fToolbarMainY;
@@ -985,6 +987,7 @@ begin
   fToolbarMain := TRUE;
   fToolbarMainX := 11;
   fToolbarMainY := 2;
+  fToolbarIconSize := 19;
   fToolbarEdit := TRUE;
   fToolbarEditX := 196;
   fToolbarEditY := 2;

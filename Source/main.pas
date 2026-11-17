@@ -31,7 +31,7 @@ uses
   StrUtils, SynEditTypes, devFileMonitor, devMonitorTypes, DdeMan, EditorList,
   devShortcuts, debugreader, ExceptionFrm, CommCtrl, devcfg, SynEditTextBuffer,
   CppPreprocessor, CBUtils, StatementList, AStyleFormatterOptionsFrm, ClangFormatterOptionsFrm, System.Actions,
-  vcl.Themes, SVGColor, Vcl.Imaging.pngimage, Vcl.WinXCtrls, Vcl.WinXPanels, Vcl.ExtDlgs,
+  vcl.Themes, SVGColor, SVGIconImageList, Vcl.Imaging.pngimage, Vcl.WinXCtrls, Vcl.WinXPanels, Vcl.ExtDlgs,
   Vcl.Styles.Hooks,
   Vcl.Styles.Utils.Menus, //Style Popup and Shell Menus (class #32768)
   Vcl.Styles.Utils.Forms, //Style dialogs box (class #32770)
@@ -815,6 +815,7 @@ type
     procedure actBreakPointExecute(Sender: TObject);
     procedure EvaluateInputKeyPress(Sender: TObject; var Key: Char);
     procedure FormShow(Sender: TObject);
+    procedure FormAfterMonitorDpiChanged(Sender: TObject; OldDPI, NewDPI: Integer);
     procedure actSkipFunctionExecute(Sender: TObject);
     procedure actNextInsExecute(Sender: TObject);
     procedure actStepInsExecute(Sender: TObject);
@@ -901,6 +902,13 @@ type
     FCloseButtonMouseDownTab: TCloseTabSheet;
     FCloseButtonShowPushed: Boolean;
 
+    // Toolbar icon size: the toolbars' own copy of the menu icons, and the grip under
+    // the toolbars that resizes them when dragged (devData.ToolbarIconSize, px at 96 dpi)
+    fToolbarImages: TSVGIconImageList;
+    fToolbarGrip: TPanel;
+    fGripDragging: Boolean;
+    fGripStartY, fGripStartSize, fGripRows: Integer;
+
     fPreviousHeight: integer; // stores MessageControl height to be able to restore to previous height
     fTools: TToolController; // tool list controller
     fProjectToolWindow: TForm; // floating left tab control
@@ -969,6 +977,11 @@ type
     procedure PageControlCloseButtonMouseLeave(Sender: TObject);
     procedure PageControlCloseButtonMouseUp(Sender: TObject;
       Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure CreateToolbarGrip;
+    procedure ApplyToolbarIconSize;
+    procedure ToolbarGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ToolbarGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure ToolbarGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   public
     procedure CloseTabProc(Sender: TObject);
     procedure ScanActiveProject;
@@ -1069,6 +1082,7 @@ begin
     end;
     LoadStyle;
   //end;
+  ApplyToolbarIconSize; // hides the toolbar grip: the PNG themes' icons have fixed sizes
 end;
 
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -7311,15 +7325,22 @@ begin
       MainMenu.Images := dmMain.SVGImageListMenuStyle;
       MessageControl.Images := dmMain.SVGImageListMessageStyle; //dmMain.SVGImageListMenuStyle;
 
-      // Set toolbar images
-      tbMain.Images := dmMain.SVGImageListMenuStyle;
-      tbCompile.Images := dmMain.SVGImageListMenuStyle;
-      tbProject.Images := dmMain.SVGImageListMenuStyle;
-      tbClasses.Images := dmMain.SVGImageListMenuStyle;
-      tbedit.Images := dmMain.SVGImageListMenuStyle;
-      tbSearch.Images := dmMain.SVGImageListMenuStyle;
-      tbSpecials.Images := dmMain.SVGImageListMenuStyle;
-      tbCompilers.Images := dmMain.SVGImageListMenuStyle;
+      // Set toolbar images: the toolbars' own copy of the menu icons, so the grip under
+      // the toolbars resizes their icons without resizing the menus'
+      // Owned by dmMain, not the form: a list scales itself when its owner form changes
+      // DPI, and this one is sized by ApplyToolbarIconSize alone
+      if not Assigned(fToolbarImages) then
+        fToolbarImages := TSVGIconImageList.Create(dmMain);
+      fToolbarImages.Assign(dmMain.SVGImageListMenuStyle);
+      fToolbarImages.DisabledGrayScale := False;
+      tbMain.Images := fToolbarImages;
+      tbCompile.Images := fToolbarImages;
+      tbProject.Images := fToolbarImages;
+      tbClasses.Images := fToolbarImages;
+      tbedit.Images := fToolbarImages;
+      tbSearch.Images := fToolbarImages;
+      tbSpecials.Images := fToolbarImages;
+      tbCompilers.Images := fToolbarImages;
 
       // Set left control images
       ProjectView.Images := dmMain.SVGImageListProjectStyle;
@@ -7343,6 +7364,113 @@ begin
       ButtonOptions.Images := dmMain.SVGIconImageWelcomeScreen;
       ButtonOptions.ImageIndex := 2;
       ButtonOptions.ImageAlignment := TImageAlignment(2);
+
+      // The lists live on dmMain, which never scales itself: size them for this form's DPI
+      dmMain.ScaleImageLists(CurrentPPI);
+      ApplyToolbarIconSize;
+end;
+
+procedure TMainForm.FormAfterMonitorDpiChanged(Sender: TObject; OldDPI, NewDPI: Integer);
+begin
+  dmMain.ScaleImageLists(NewDPI);
+  ApplyToolbarIconSize;
+end;
+
+const
+  cToolbarIconMin     = 16; // px at 96 dpi
+  cToolbarIconMax     = 64;
+  cToolbarIconDefault = 19; // the .dfm's size
+
+// A thin strip under the toolbars; dragging it down makes the toolbar icons bigger.
+procedure TMainForm.CreateToolbarGrip;
+begin
+  if Assigned(fToolbarGrip) then
+    Exit;
+  fToolbarGrip := TPanel.Create(Self);
+  fToolbarGrip.Parent := Self;
+  fToolbarGrip.Align := alTop;
+  fToolbarGrip.Top := ToolbarDock.Top + ToolbarDock.Height; // just under the toolbars
+  fToolbarGrip.Height := MulDiv(5, CurrentPPI, 96);
+  fToolbarGrip.BevelOuter := bvNone;
+  fToolbarGrip.Caption := '';
+  fToolbarGrip.Cursor := crSizeNS;
+  fToolbarGrip.Hint := 'Drag to resize the toolbar icons';
+  fToolbarGrip.ShowHint := True;
+  fToolbarGrip.OnMouseDown := ToolbarGripMouseDown;
+  fToolbarGrip.OnMouseMove := ToolbarGripMouseMove;
+  fToolbarGrip.OnMouseUp := ToolbarGripMouseUp;
+end;
+
+// Sizes the toolbar icons and buttons from devData.ToolbarIconSize at this form's DPI.
+procedure TMainForm.ApplyToolbarIconSize;
+var
+  Px, PadW, PadH: Integer;
+  Bars: TArray<TToolBar>;
+  Bar: TToolBar;
+begin
+  CreateToolbarGrip;
+  // The PNG themes (Style 0) keep their fixed-size lists, and there is nothing to drag
+  fToolbarGrip.Visible := Assigned(fToolbarImages) and (tbMain.Images = fToolbarImages);
+  if not fToolbarGrip.Visible then
+    Exit;
+
+  // A value outside the range is an older .ini without the key (read as 1) or a hand edit
+  if (devData.ToolbarIconSize < cToolbarIconMin) or (devData.ToolbarIconSize > cToolbarIconMax) then
+    devData.ToolbarIconSize := cToolbarIconDefault;
+
+  Px := MulDiv(devData.ToolbarIconSize, CurrentPPI, 96);
+  if (fToolbarImages.Width <> Px) or (fToolbarImages.Height <> Px) then
+    fToolbarImages.Size := Px;
+
+  // The .dfm's buttons are 29 x 28 around 19 px icons: keep that margin
+  PadW := MulDiv(10, CurrentPPI, 96);
+  PadH := MulDiv(9, CurrentPPI, 96);
+  Bars := [tbMain, tbCompile, tbProject, tbEdit, tbSearch, tbSpecials];
+  ToolbarDock.DisableAlign;
+  try
+    for Bar in Bars do
+    begin
+      Bar.ButtonWidth  := Px + PadW;
+      Bar.ButtonHeight := Px + PadH;
+    end;
+    // A control bar sets each toolbar a little way into its row (the .dfm's Top = 2),
+    // so the row needs a margin past the buttons or their bottoms are cut off
+    ToolbarDock.RowSize := Px + PadH + MulDiv(4, CurrentPPI, 96);
+  finally
+    ToolbarDock.EnableAlign;
+  end;
+end;
+
+procedure TMainForm.ToolbarGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if Button <> mbLeft then
+    Exit;
+  fGripDragging  := True;
+  fGripStartY    := Mouse.CursorPos.Y; // screen coordinates: the grip moves as the toolbars grow
+  fGripStartSize := devData.ToolbarIconSize;
+  fGripRows      := Max(1, Round(ToolbarDock.Height / ToolbarDock.RowSize));
+end;
+
+procedure TMainForm.ToolbarGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+var
+  NewSize: Integer;
+begin
+  if not fGripDragging then
+    Exit;
+  // Each row of toolbars grows by the change in icon size, so the grip follows the
+  // mouse when the size changes by the distance dragged over the number of rows
+  NewSize := fGripStartSize + MulDiv(Mouse.CursorPos.Y - fGripStartY, 96, CurrentPPI) div fGripRows;
+  NewSize := EnsureRange(NewSize, cToolbarIconMin, cToolbarIconMax);
+  if NewSize <> devData.ToolbarIconSize then
+  begin
+    devData.ToolbarIconSize := NewSize;
+    ApplyToolbarIconSize;
+  end;
+end;
+
+procedure TMainForm.ToolbarGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  fGripDragging := False;
 end;
 
 procedure TMainForm.GetProjectHistory;

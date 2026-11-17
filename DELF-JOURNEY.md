@@ -40,9 +40,10 @@ vcl-styles-utils, DDetours, Abbrevia) and the separate tools (Packman, PackMaker
 | `master` (start) | 106 files, 56,752 lines | 0 | 68 files, 45,689 lines | 23 files, 1,530 lines | 43 files, 36,839 lines | 392 files, 258,655 lines |
 | `delf-units` after IntList | 106 files, 57,189 lines¹ | 1 file, 418 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
 | `delf-units` after EditorList | 106 files, 57,201 lines¹ | 2 files, 1,068 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
+| `delf-units` after Instances | 106 files, 57,210 lines¹ | 3 files, 1,235 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
 
-¹ Includes the generated `.pas` of each Delf unit. Units in Delf so far: **2 of 106** (1,106
-of ~56,750 original lines, 1.9%).
+¹ Includes the generated `.pas` of each Delf unit. Units in Delf so far: **3 of 106** (1,264
+of ~56,750 original lines, 2.2%).
 
 ## Files attacked
 
@@ -50,6 +51,7 @@ of ~56,750 original lines, 1.9%).
 |---|---|---|---|---|---|
 | 1 | `VCL\ClassBrowsing\IntList` | 445 → 418 | `2797fce` | `ca0effe` | Differential test, 1.2M operations, Win32 + Win64; class browser in the 64-bit build |
 | 2 | `EditorList` | 661 → 650 | `b3437a0` | `6ea85d8` | Dev-C++'s own `TestEditorList` (switched off upstream), run in both 64-bit builds: same result in each (see below) |
+| 3 | `Instances` | 158 → 167 | `dee5f73` (pass 1), `76f8a86` (fixes) | `1197288` | Pass 1 the door: delfc's output = the original byte for byte, but the marker comment. Then builds, both branches and platforms; `WM_COPYDATA` sent to the 64-bit build, with and without a terminator |
 
 ## Errors found
 
@@ -72,12 +74,16 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 12 | `EditorList.GetVisibleEditors` | Split view: the left editor returned as the right one too | After editor options change, the right pane isn't repainted | Claude, while rewriting | `b3437a0`, `6ea85d8` |
 | 13 | `EditorList.CloseEditor` | *Suspected:* returns True for an `InProject` editor the project doesn't hold, without closing it | `CloseAll` would loop forever | Claude, while rewriting | flagged only |
 | 14 | `Tests.TestEditorList` | Stale: expects the right pane focused after opening editors there; switched off in `TestAll` | The test fails at line 166, original and Delf alike | test (run for this project) | not changed |
+| 15 | `Instances.GetSentStructData` | Reads another process's `WM_COPYDATA` text up to a terminator, ignoring `cbData` | Live: any process can make Dev-C++ read past the data | Claude, while rewriting | `76f8a86`, `1197288` |
+| 16 | `Instances` (3 calls) | `SizeOf(Buffer)` (bytes) as a count of characters to `GetClassName`, `GetModuleFileName(Ex)` | Windows may write 1,024 characters into 512 (dormant: single-instance code is off) | Claude, while rewriting | `76f8a86`, `1197288` |
+| 17 | `Instances` callback | Process handle not closed when `GetModuleFileNameEx` fails | A handle leak (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
+| 18 | `Instances.GetPreviousInstance` | `while True` waits for a window that may never match | Hangs at startup if the mutex is another Dev-C++ exe's (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
 arm is now written (*Delf*; `dev64` states it too).
 
-**Tally so far:** Claude 11 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 15 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Fixes (beyond the errors)
@@ -90,6 +96,7 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
 - **EditorList**: four `case`s on the layout became `match`es (two had `else` arms no value could
   reach); `with` gone from `GetPreviousEditor` (flattened to early exits); `GetEditorFromTag`
   stops at its first match; `UpdateLayout`'s last `else if`, always true, a plain `else`.
+- **Instances**: none yet. Pass 1 only (the rename and `{ delf: migrate }`); its fixes are bugs (above).
 
 ## Lessons
 
@@ -110,6 +117,12 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
   to its own line). The `.delf` keeps them; the generated `.pas` loses them.
 - **The project's own tests are worth finding and running**, even switched-off ones: a temporary
   hook ran `TestEditorList` in both builds. It needed its stale focus asserts set aside.
+
+- **Pass 1 is cheap and exact** (Instances): rename, add `{ delf: migrate }`, and delfc's output is
+  the original byte for byte. The bug fixes then go in as their own commit, the same text on
+  both branches.
+- **Unicode-era Win32 calls** are a class to grep for: `SizeOf` of a `Char` array given where an
+  API counts characters (three in Instances).
 
 ## Takeaways
 
@@ -144,3 +157,6 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026.** EditorList in Delf (`b3437a0`), with the enum aliases; found the split-view
   repaint bug (fixed on `dev64`, `6ea85d8`) and a suspected endless `CloseAll`; ran Dev-C++'s
   own switched-off `TestEditorList` in both builds. Next: `Instances`.
+- **18 Nov 2026.** The two-pass way adopted (the user). Instances, pass 1 (`dee5f73`, the door
+  exact), then four bugs fixed on both branches (`76f8a86`, `1197288`); one live
+  (`WM_COPYDATA` read past its data), three dormant in the single-instance code.

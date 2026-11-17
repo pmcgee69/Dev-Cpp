@@ -52,6 +52,7 @@ of ~56,750 original lines, 2.2%).
 | 1 | `VCL\ClassBrowsing\IntList` | 445 → 418 | `2797fce` | `ca0effe` | Differential test, 1.2M operations, Win32 + Win64; class browser in the 64-bit build |
 | 2 | `EditorList` | 661 → 650 | `b3437a0` | `6ea85d8` | Dev-C++'s own `TestEditorList` (switched off upstream), run in both 64-bit builds: same result in each (see below) |
 | 3 | `Instances` | 158 → 167 | `dee5f73` (pass 1), `76f8a86` (fixes) | `1197288` | Pass 1 the door: delfc's output = the original byte for byte, but the marker comment. Then builds, both branches and platforms; `WM_COPYDATA` sent to the 64-bit build, with and without a terminator |
+| 4 | `VCL\ClassBrowsing\CppTokenizer` | 804 → 806 | `d79bf6b` (pass 1) | | Pass 1 the door: delfc's output = the original but the marker. Bug reading: not yet |
 
 ## Errors found
 
@@ -165,3 +166,6 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026.** Grepped Dev-C++ for Instances' `SizeOf`-as-character-count class: two more
   (`Utils.SetPath`, fixed on both branches; Packman, logged). A bug found once is a pattern to
   search for everywhere.
+- **18 Nov 2026.** CppTokenizer, pass 1 (`d79bf6b`, the door exact). Next: read it for bugs
+  (804 lines; pointer-walking `PChar` code, so look for reads past the end), then fixes on both
+  branches, then a differential test of the tokens it produces over real headers.

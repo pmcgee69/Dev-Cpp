@@ -152,6 +152,14 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
   the literal's type); `AreEqual<Integer>`. **`.cmd` files**: `set` resets the error level (a
   `.bat` doesn't), and `set X=1 & ...` stores `"1 "`: take the exit code first, quote every set.
 
+- **Upstream had tests**: Tests.pas (in-app, its action disabled, TestAll running only
+  TestEditor), a test plan (Source/Tests/Document, DevTest.pdf) with a manual checklist, and a
+  parser corpus (Source/Tests/Parser, 18 files with written checks). The corpus moved to DUnitX:
+  the class browser's whole chain (preprocessor, tokenizer, parser) runs without a window, so
+  upstream's check on Preprocessor.cpp is an assertion and every file's parsed statements are
+  compared with golden files recorded from master. All three versions agree on all 18 files.
+- **cbutils declares its own TFile**, hiding System.IOUtils.TFile in any unit that uses both.
+
 ## Takeaways
 
 Updated as units land; the short version of what this project shows.
@@ -200,3 +208,8 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026.** Tests made first-class (the user). CppTokenizer read: three live bugs (reads
   past the end; a misread escape in well-formed code) fixed on both branches (`289ae81`,
   `16f2ad6`), with `delfcpp-tests`: one DUnitX source, three versions, two platforms.
+- **18 Nov 2026.** Upstream's tests found and brought in where they can run headless (the user:
+  migrate to DUnitX where we can). delfcpp-tests: 38 tests (tokenizer 19; parser corpus 19, the
+  STL headers among them). dev64 and Delf pass all; the original fails only the 6 tokenizer
+  regressions. Next: tests for IntList, Instances, Utils.SetPath, EditorList (LayoutFor), and the
+  in-app Tests.pas behind a test switch.

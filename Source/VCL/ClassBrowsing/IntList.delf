@@ -1,0 +1,418 @@
+unit IntList;
+{Copyright 2001, Gary Darby, Intellitech Systems Inc., www.DelphiForFun.org
+
+ This program may be used or modified for non-commercial purposes
+ so long as this original notice remains in place.
+ All other rights are reserved
+ }
+
+{ Delf version (Dev-C++, 2026). delfc writes IntList.pas from this file: edit this one.
+  What changed from the Delphi original, and why:
+  - The values are Integer, said so. The original declared "int64 = integer" and exported it,
+    so every unit that used IntList had its own Int64 turned into a 32-bit Integer, unseen
+    (CppPreprocessor's #if arithmetic among them).
+  - The items are a dynamic array, not memory from ReallocMem behind a pointer to an array
+    of MaxInt div 32 items; the capacity is its length. No pointer casts: swapping two items
+    copies two records (the original swapped the objects through Integer casts, which cut a
+    pointer to 32 bits on Win64).
+  - Error finds its caller with ReturnAddress. The original read [EBP+4] in x86 assembler,
+    which Win64 assembles too, reading the wrong place. Error is noreturn: it always raises.
+  - Find was a binary search that moved its low end one place at a time on a miss
+    (L := L + 1, for L := I + 1): right answers, linear time.
+  - Add says what each duplicate rule does, dupAccept included (a match must cover them all).
+  - No with. FUpdateCount, never set, is gone, and the destructor that only freed the
+    memory: the array frees itself. LoadFromStream reads each value with ReadBuffer, which
+    raises on a short file, not Read, which left the rest as whatever was in N. }
+
+interface
+
+uses
+  Classes, SysUtils;
+
+type
+  { TIntList class }
+  TIntList = class;
+
+  TIntItem = record
+    FInt: Integer;
+    FObject: TObject;
+  end;
+
+  TIntListSortCompare = function(List: TIntList; Index1, Index2: Integer): Integer;
+
+  TIntList = class(TPersistent)
+  private
+    FList: TArray<TIntItem>; // its length is the capacity; the first FCount are in use
+    FCount: Integer;
+    FSorted: Boolean;
+    FDuplicates: TDuplicates;
+    FOnChange: TNotifyEvent;
+    FOnChanging: TNotifyEvent;
+    procedure ExchangeItems(Index1, Index2: Integer);
+    procedure Grow;
+    procedure QuickSort(L, R: Integer; SCompare: TIntListSortCompare);
+    procedure InsertItem(Index: Integer; const S: Integer);
+    procedure SetSorted(Value: Boolean);
+  protected
+    procedure Error(const Msg: String; Data: Integer); noreturn;
+    procedure Changed; virtual;
+    procedure Changing; virtual;
+    function Get(Index: Integer): Integer;
+    function GetCapacity: Integer;
+    function GetCount: Integer;
+    function GetObject(Index: Integer): TObject;
+    procedure Put(Index: Integer; const S: Integer);
+    procedure PutObject(Index: Integer; AObject: TObject);
+    procedure SetCapacity(NewCapacity: Integer);
+    procedure SetUpdateState(Updating: Boolean);
+  public
+    function Add(const S: Integer): Integer;
+    function AddObject(const S: Integer; AObject: TObject): Integer; virtual;
+    procedure Clear;
+    procedure Delete(Index: Integer);
+    procedure Exchange(Index1, Index2: Integer);
+    function Find(const S: Integer; var Index: Integer): Boolean; virtual;
+    function IndexOf(const S: Integer): Integer;
+    procedure Insert(Index: Integer; const S: Integer);
+    procedure Sort; virtual;
+    procedure CustomSort(Compare: TIntListSortCompare); virtual;
+
+    procedure LoadFromFile(const FileName: String); virtual;
+    procedure LoadFromStream(Stream: TStream); virtual;
+    procedure SaveToFile(const FileName: String); virtual;
+    procedure SaveToStream(Stream: TStream);
+
+    property Duplicates: TDuplicates read FDuplicates write FDuplicates;
+    property Sorted: Boolean read FSorted write SetSorted;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property OnChanging: TNotifyEvent read FOnChanging write FOnChanging;
+    property Integers[Index: Integer]: Integer read Get write Put; default;
+    property Count: Integer read GetCount;
+    property Objects[Index: Integer]: TObject read GetObject write PutObject;
+  end;
+
+implementation
+
+{ TIntList }
+
+procedure TIntList.Error(const Msg: String; Data: Integer);
+begin
+  raise EStringListError.CreateFmt(Msg, [Data]) at ReturnAddress;
+end;
+
+const
+  sDuplicateInt: String = 'Cannot add integer because if already exists';
+  sListIndexError = 'List index Error';
+  SSortedListError = 'Cannont insert to sorted list';
+
+function TIntList.Add(const S: Integer): Integer;
+begin
+  if not Sorted then
+    Result := FCount
+  else if Find(S, Result) then
+    match Duplicates of
+      | dupIgnore: Exit
+      | dupError:  Error(SDuplicateInt, 0)
+      | dupAccept: {}
+    end;
+  InsertItem(Result, S);
+end;
+
+function TIntList.AddObject(const S: Integer; AObject: TObject): Integer;
+begin
+  Result := Add(S);
+  PutObject(Result, AObject);
+end;
+
+procedure TIntList.Changed;
+begin
+  if Assigned(FOnChange) then
+    FOnChange(Self);
+end;
+
+procedure TIntList.Changing;
+begin
+  if Assigned(FOnChanging) then
+    FOnChanging(Self);
+end;
+
+procedure TIntList.Clear;
+begin
+  if FCount <> 0 then begin
+    Changing;
+    FCount := 0;
+    SetCapacity(0);
+    Changed;
+  end;
+end;
+
+procedure TIntList.Delete(Index: Integer);
+begin
+  if (Index < 0) or (Index >= FCount) then
+    Error(SListIndexError, Index);
+  Changing;
+  Dec(FCount);
+  if Index < FCount then
+    System.Move(FList[Index + 1], FList[Index], (FCount - Index) * SizeOf(TIntItem));
+  Changed;
+end;
+
+procedure TIntList.Exchange(Index1, Index2: Integer);
+begin
+  if (Index1 < 0) or (Index1 >= FCount) then
+    Error(SListIndexError, Index1);
+  if (Index2 < 0) or (Index2 >= FCount) then
+    Error(SListIndexError, Index2);
+  Changing;
+  ExchangeItems(Index1, Index2);
+  Changed;
+end;
+
+procedure TIntList.ExchangeItems(Index1, Index2: Integer);
+begin
+  var Temp := FList[Index1];
+  FList[Index1] := FList[Index2];
+  FList[Index2] := Temp;
+end;
+
+function TIntList.Find(const S: Integer; var Index: Integer): Boolean;
+var
+  L, H, I: Integer;
+begin
+  Result := False;
+  L := 0;
+  H := FCount - 1;
+  while L <= H do begin
+    I := (L + H) shr 1;
+    if FList[I].FInt < S then
+      L := I + 1
+    else begin
+      H := I - 1;
+      if FList[I].FInt = S then begin
+        Result := True;
+        if Duplicates <> dupAccept then
+          L := I;
+      end;
+    end;
+  end;
+  Index := L;
+end;
+
+function TIntList.Get(Index: Integer): Integer;
+begin
+  if (Index < 0) or (Index >= FCount) then
+    Error(SListIndexError, Index);
+  Result := FList[Index].FInt;
+end;
+
+function TIntList.GetCapacity: Integer;
+begin
+  Result := Length(FList);
+end;
+
+function TIntList.GetCount: Integer;
+begin
+  Result := FCount;
+end;
+
+function TIntList.GetObject(Index: Integer): TObject;
+begin
+  if (Index < 0) or (Index >= FCount) then
+    Error(SListIndexError, Index);
+  Result := FList[Index].FObject;
+end;
+
+procedure TIntList.Grow;
+var
+  Delta: Integer;
+begin
+  if Length(FList) > 64 then
+    Delta := Length(FList) div 4
+  else if Length(FList) > 8 then
+    Delta := 16
+  else
+    Delta := 4;
+  SetCapacity(Length(FList) + Delta);
+end;
+
+function TIntList.IndexOf(const S: Integer): Integer;
+begin
+  if not Sorted then begin
+    for Result := 0 to GetCount - 1 do
+      if Get(Result) = S then
+        Exit;
+    Result := -1;
+  end else if not Find(S, Result) then
+    Result := -1;
+end;
+
+procedure TIntList.Insert(Index: Integer; const S: Integer);
+begin
+  if Sorted then
+    Error(SSortedListError, 0);
+  if (Index < 0) or (Index > FCount) then
+    Error(SListIndexError, Index);
+  InsertItem(Index, S);
+end;
+
+procedure TIntList.InsertItem(Index: Integer; const S: Integer);
+begin
+  Changing;
+  if FCount = Length(FList) then
+    Grow;
+  if Index < FCount then
+    System.Move(FList[Index], FList[Index + 1], (FCount - Index) * SizeOf(TIntItem));
+  FList[Index].FObject := nil;
+  FList[Index].FInt := S;
+  Inc(FCount);
+  Changed;
+end;
+
+procedure TIntList.Put(Index: Integer; const S: Integer);
+begin
+  if Sorted then
+    Error(SSortedListError, 0);
+  if (Index < 0) or (Index >= FCount) then
+    Error(SListIndexError, Index);
+  Changing;
+  FList[Index].FInt := S;
+  Changed;
+end;
+
+procedure TIntList.PutObject(Index: Integer; AObject: TObject);
+begin
+  if (Index < 0) or (Index >= FCount) then
+    Error(SListIndexError, Index);
+  Changing;
+  FList[Index].FObject := AObject;
+  Changed;
+end;
+
+procedure TIntList.QuickSort(L, R: Integer; SCompare: TIntListSortCompare);
+var
+  I, J, P: Integer;
+begin
+  repeat
+    I := L;
+    J := R;
+    P := (L + R) shr 1;
+    repeat
+      while SCompare(Self, I, P) < 0 do
+        Inc(I);
+      while SCompare(Self, J, P) > 0 do
+        Dec(J);
+      if I <= J then begin
+        ExchangeItems(I, J);
+        if P = I then
+          P := J
+        else if P = J then
+          P := I;
+        Inc(I);
+        Dec(J);
+      end;
+    until I > J;
+    if L < J then
+      QuickSort(L, J, SCompare);
+    L := I;
+  until I >= R;
+end;
+
+procedure TIntList.SetCapacity(NewCapacity: Integer);
+begin
+  SetLength(FList, NewCapacity);
+end;
+
+procedure TIntList.SetSorted(Value: Boolean);
+begin
+  if FSorted <> Value then begin
+    if Value then
+      Sort;
+    FSorted := Value;
+  end;
+end;
+
+procedure TIntList.SetUpdateState(Updating: Boolean);
+begin
+  if Updating then
+    Changing
+  else
+    Changed;
+end;
+
+function IntListCompare(List: TIntList; Index1, Index2: Integer): Integer;
+begin
+  if List.FList[Index1].FInt > List.FList[Index2].FInt then
+    Result := +1
+  else if List.FList[Index1].FInt < List.FList[Index2].FInt then
+    Result := -1
+  else
+    Result := 0;
+end;
+
+procedure TIntList.Sort;
+begin
+  CustomSort(IntListCompare);
+end;
+
+procedure TIntList.SaveToFile(const FileName: String);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmCreate);
+  try
+    SaveToStream(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TIntList.SaveToStream(Stream: TStream);
+var
+  I: Integer;
+  N: Integer;
+  Val: Integer;
+begin
+  N := Count;
+  Stream.WriteBuffer(N, SizeOf(N));
+  for I := 0 to Count - 1 do begin
+    Val := Integers[I];
+    Stream.WriteBuffer(Val, SizeOf(Val));
+  end;
+end;
+
+procedure TIntList.LoadFromFile(const FileName: String);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    LoadFromStream(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TIntList.LoadFromStream(Stream: TStream);
+var
+  Size: Integer;
+  I: Integer;
+  N: Integer;
+begin
+  Clear;
+  Stream.ReadBuffer(Size, SizeOf(Size));
+  for I := 0 to Size - 1 do begin
+    Stream.ReadBuffer(N, SizeOf(N));
+    Add(N);
+  end;
+end;
+
+procedure TIntList.CustomSort(Compare: TIntListSortCompare);
+begin
+  if not Sorted and (FCount > 1) then begin
+    Changing;
+    QuickSort(0, FCount - 1, Compare);
+    Changed;
+  end;
+end;
+
+end.

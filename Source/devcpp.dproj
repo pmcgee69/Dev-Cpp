@@ -46,6 +46,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <PreBuildEvent><![CDATA[call "$(MSBuildProjectDirectory)\DelfUnits.cmd"]]></PreBuildEvent>
         <DCC_E>false</DCC_E>
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>

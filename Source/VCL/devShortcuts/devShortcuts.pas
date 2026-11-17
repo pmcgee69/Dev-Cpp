@@ -22,7 +22,7 @@ unit devShortcuts;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Messages, SysUtils, Classes, Menus, Controls, IniFiles, Graphics, ActnList;
 {$ENDIF}
 {$IFDEF LINUX}
@@ -61,7 +61,7 @@ procedure Register;
 
 implementation
 
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
 uses
   devShortcutsEditorForm, Forms;
 {$ENDIF}

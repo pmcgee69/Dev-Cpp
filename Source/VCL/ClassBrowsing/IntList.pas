@@ -179,16 +179,17 @@ end;
 procedure TIntList.ExchangeItems(Index1, Index2: Integer);
 var
   Temp: Int64;
+  TempObject: TObject;
   Item1, Item2: PIntItem;
 begin
   Item1 := @FList^[Index1];
   Item2 := @FList^[Index2];
-  Temp := Integer(Item1^.FInt);
+  Temp := Item1^.FInt; // was Integer(...): harmless, int64 is declared as integer above
   Item1^.FInt := Item2^.FInt;
   Item2^.FInt := Temp;
-  Temp := Integer(Item1^.FObject);
-  Integer(Item1^.FObject) := Integer(Item2^.FObject);
-  Integer(Item2^.FObject) := Temp;
+  TempObject := Item1^.FObject; // was through Integer casts: 32 bits, a pointer is 64 on Win64
+  Item1^.FObject := Item2^.FObject;
+  Item2^.FObject := TempObject;
 end;
 
 function TIntList.Find(const S: Int64; var Index: Integer): Boolean;

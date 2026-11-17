@@ -479,7 +479,7 @@ begin
   fTabSheet := TCloseTabSheet.Create(ParentPageControl);
   fTabSheet.Caption := ExtractFileName(fFilename) + CTAB_PADDING; // UntitlexX or main.cpp
   fTabSheet.PageControl := ParentPageControl;
-  fTabSheet.Tag := integer(Self); // Define an index for each tab
+  fTabSheet.Tag := NativeInt(Self); // Define an index for each tab (NativeInt: a pointer is 64 bits on Win64)
   fTabSheet.TabVisible := True;
   //fTabSheet.OnClose := MainForm.CloseTabProc;
 

@@ -22,7 +22,7 @@ unit CppPreprocessor;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Classes, SysUtils, StrUtils, ComCtrls, Math, IntList, cbutils, CharUtils;
 {$ENDIF}
 {$IFDEF LINUX}

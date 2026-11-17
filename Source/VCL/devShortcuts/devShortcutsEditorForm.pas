@@ -22,7 +22,7 @@ unit devShortcutsEditorForm;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, ComCtrls, StdCtrls, Menus, devShortcuts, Vcl.Themes;
 {$ENDIF}

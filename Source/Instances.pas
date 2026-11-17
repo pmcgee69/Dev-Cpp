@@ -26,7 +26,7 @@ uses
 
 function GetSentStructData(Message: TMessage): String;
 procedure SendToPreviousInstance(Instance: THandle; const Data: String);
-function GetPreviousInstanceCallback(Handle: THandle; Param: Integer): boolean; stdcall;
+function GetPreviousInstanceCallback(Handle: THandle; Param: LPARAM): BOOL; stdcall;
 function GetPreviousInstance: THandle;
 const
   SENDDATAID = 12345; // message used to inform Dev-C++ of an opening instance
@@ -69,13 +69,13 @@ begin
     SendMessage(Instance,
       WM_COPYDATA,
       Application.Handle,
-      Integer(@DataStruct));
+      LPARAM(@DataStruct));
   finally
     StrDispose(Buffer);
   end;
 end;
 
-function GetPreviousInstanceCallback(Handle: THandle; Param: Integer): boolean; stdcall;
+function GetPreviousInstanceCallback(Handle: THandle; Param: LPARAM): BOOL; stdcall;
 var
   Buffer: array[0..511] of char;
   WindowModuleName, WindowClassName, CompareFileName: String;
@@ -91,7 +91,7 @@ begin
 
   // Class names match
   if WindowClassName = TMainForm.ClassName then begin
-    WindowModule := GetWindowLong(Handle, GWL_HINSTANCE);
+    WindowModule := GetWindowLongPtr(Handle, GWLP_HINSTANCE);
     if WindowModule = 0 then
       Exit;
 
@@ -145,7 +145,7 @@ begin
     // Temporary fix: try to find the MainForm handle every 100ms
 
     while True do begin
-      if not EnumWindows(@GetPreviousInstanceCallback, Integer(PString(@ThisModuleFileName))) then begin
+      if not EnumWindows(@GetPreviousInstanceCallback, LPARAM(PString(@ThisModuleFileName))) then begin
         Result := PreviousInstance;
         Exit;
       end;

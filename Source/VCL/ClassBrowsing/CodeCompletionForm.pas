@@ -22,7 +22,7 @@ unit CodeCompletionForm;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Classes, Graphics, Forms, StdCtrls, Controls,
   CodeCompletion, CppParser, CBUtils, Winapi.Messages, Vcl.ExtCtrls;
 {$ENDIF}

@@ -22,7 +22,7 @@ unit devFileMonitor;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Messages, SysUtils, Classes, Forms, Controls,
   devMonitorThread, devMonitorTypes;
 {$ENDIF}

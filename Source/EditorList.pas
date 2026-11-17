@@ -46,7 +46,7 @@ type
     function FileIsOpen(const FileName: String; ProjectOnly: boolean = FALSE): TEditor;
     function GetEditor(PageIndex: integer = -1; PageControl: TPageControl = nil): TEditor;
     function GetEditorFromFileName(const FileName: String; AEncoding: TEncoding = nil): TEditor;
-    function GetEditorFromTag(tag: integer): TEditor;
+    function GetEditorFromTag(tag: NativeInt): TEditor;
     function GetPreviousEditor(Editor: TEditor): TEditor;
     procedure ForceCloseEditor(Editor: TEditor); // close, no questions asked
     function CloseEditor(Editor: TEditor): Boolean;
@@ -264,7 +264,7 @@ begin
 
       // Find the first tab in the history list that is still open
       for I := Editor.PreviousEditors.Count - 1 downto 0 do begin
-        e := GetEditorFromTag(Integer(Editor.PreviousEditors[i]));
+        e := GetEditorFromTag(NativeInt(Editor.PreviousEditors[i]));
         if Assigned(e) then begin
           Result := e;
           Exit;
@@ -467,7 +467,7 @@ begin
     Result := NewEditor(FullFileName, False, False, nil, AEncoding);
 end;
 
-function TEditorList.GetEditorFromTag(tag: integer): TEditor;
+function TEditorList.GetEditorFromTag(tag: NativeInt): TEditor;
 var
   I: integer;
 begin

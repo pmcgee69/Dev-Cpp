@@ -23,7 +23,7 @@ interface
 
 //path delimiter
 const
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   pd = '\';
 {$ENDIF}
 {$IFDEF LINUX}

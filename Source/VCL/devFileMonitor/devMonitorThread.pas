@@ -22,7 +22,7 @@ unit devMonitorThread;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, devMonitorTypes, Math, SyncObjs;
 {$ENDIF}

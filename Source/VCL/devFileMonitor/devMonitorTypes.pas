@@ -22,7 +22,7 @@ unit devMonitorTypes;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Classes, Windows;
 {$ENDIF}
 {$IFDEF LINUX}

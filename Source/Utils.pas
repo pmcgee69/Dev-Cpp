@@ -1019,7 +1019,7 @@ begin
   end;
 
   // Last, replace all slashes with backslahes
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Result := StringReplace(Result, '/', '\', [rfReplaceAll]);
 {$ENDIF}
 end;

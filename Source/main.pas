@@ -5461,7 +5461,7 @@ begin
       // Create an action that executes when clicking on the item
       Act := TAction.Create(Item);
       Act.Name := 'dynactOpenEditorByTag';
-      Act.Tag := Integer(e);
+      Act.Tag := NativeInt(e);
       Act.OnExecute := actOpenEditorByTagExecute;
 
       // Attach it to the new menu item
@@ -7300,7 +7300,7 @@ begin
   Result := fFilesToOpen.Count;
 
   // Free list of pointers
-  LocalFree(Cardinal(ParameterList));
+  LocalFree(HLOCAL(ParameterList));
 end;
 
 procedure TMainForm.LoadStyle;

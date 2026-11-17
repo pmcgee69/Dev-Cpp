@@ -111,14 +111,14 @@ begin
     Winapi.Windows.RedrawWindow(FProcessWindow, nil, 0, RDW_INVALIDATE or RDW_UPDATENOW);
 end;
 
-function OpenThread(dwDesiredAccess: DWORD; bInheritHandle: BOOL; dwThreadId: DWORD): DWORD; stdcall; external 'kernel32.dll';
+function OpenThread(dwDesiredAccess: DWORD; bInheritHandle: BOOL; dwThreadId: DWORD): THandle; stdcall; external 'kernel32.dll';
 
 function EnumWindowsProc(AWnd: THandle; ASearchRec: Pointer): Bool; stdcall;
 begin
   var WindowPlacement: PWindowPlacement := nil;
   if (GetWindowPlacement(AWnd, WindowPlacement) and (WindowPlacement.showCmd <> SW_HIDE)) then Exit(True);
 
-  var ThreadHandle: DWORD := 0;
+  var ThreadHandle: THandle := 0;
   var ThreadProcessID: Cardinal := 0;
 
   try

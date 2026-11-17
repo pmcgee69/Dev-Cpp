@@ -103,9 +103,9 @@ type
     fLines: TList;
     fUnits: TList;
     fFuncs: TList;
-    function StackStop: dword;
+    function StackStop: NativeUInt;
     procedure ReadMapFile(const Fname: String);
-    function AddressInfo(Address: Cardinal): String;
+    function AddressInfo(Address: NativeUInt): String;
     procedure GatherSystemInfo; // fill interface
     function GetStackReport: String; // bug report text
     function GetMemoryReport: String; // ...
@@ -135,7 +135,7 @@ class procedure TEAnalyzer.EHandler(Sender: TObject; E: Exception);
 begin
   with TExceptionFrm.Create(Application.MainForm) do try
 
-    lblAddress.Caption := Format('0x%8.8x', [dword(ExceptAddr)]);
+    lblAddress.Caption := Format('0x%8.8x', [NativeUInt(ExceptAddr)]);
     lblError.Caption := E.Message;
 
     // Can't make this much more clear
@@ -156,21 +156,20 @@ end;
 
 { TfrmExceptionsAnalyzer }
 
-function TExceptionFrm.StackStop: dword;
+function TExceptionFrm.StackStop: NativeUInt;
 var
   si: TSystemInfo;
   mbi: TMemoryBasicInformation;
-  pagesize: dword;
-  tmpSP: dword;
+  pagesize: NativeUInt;
+  tmpSP: NativeUInt;
 begin
   GetSystemInfo(si);
   pagesize := si.dwPageSize;
-  asm
-    mov tmpSP,esp
-  end;
+  // A local's address is the stack pointer, near enough: no asm (Win64 has none inline)
+  tmpSP := NativeUInt(@si);
   tmpSP := pagesize * (tmpSP div pagesize);
   VirtualQuery(pointer(tmpSP), mbi, sizeof(mbi));
-  result := mbi.RegionSize + dword(mbi.BaseAddress);
+  result := mbi.RegionSize + NativeUInt(mbi.BaseAddress);
 end;
 
 procedure TExceptionFrm.ReadMapFile(const Fname: String);
@@ -312,7 +311,7 @@ begin
   end;
 end;
 
-function TExceptionFrm.AddressInfo(Address: Cardinal): String;
+function TExceptionFrm.AddressInfo(Address: NativeUInt): String;
 var
   I, iUnit: integer;
   MapAddress: dword;
@@ -323,9 +322,11 @@ begin
   sLine := '';
   iUnit := -1;
 
-  MapAddress := Address - (hInstance + $1000);
-  if MapAddress >= $FF000000 then // out of scope
+  // Outside this module's code: not ours to name. On Win64 the image is above 4 GB, so
+  // the subtraction is done in NativeUInt and only the offset, under 4 GB, kept in a dword
+  if (Address < NativeUInt(hInstance) + $1000) or (Address - (NativeUInt(hInstance) + $1000) >= $FF000000) then
     Exit;
+  MapAddress := dword(Address - (NativeUInt(hInstance) + $1000));
 
   // find unit
   for I := 0 to fUnits.Count - 1 do
@@ -366,7 +367,7 @@ end;
 function TExceptionFrm.GetStackReport: String;
 var
   {retaddr, }walker: ^pointer;
-  max: Cardinal;
+  max: NativeUInt;
 begin
 
   result := 'Stack trace' + #13#10
@@ -376,14 +377,12 @@ begin
   //result := result + AddressInfo(Cardinal(StrToInt(lblAddress.Caption)));
 
   // Hack fix, assume stack leftovers are not erased
-  asm
-		mov walker, esp
-  end;
+  walker := Pointer(@walker); // a local's address: the stack pointer, near enough (no asm on Win64)
   max := StackStop;
   repeat
-    result := result + AddressInfo(Cardinal(walker^));
+    result := result + AddressInfo(NativeUInt(walker^));
     Inc(walker);
-  until dword(walker) > max;
+  until NativeUInt(walker) > max;
 
   // History of stack, ignore esp frame, because it'll just refer to GetStackReport
   //asm

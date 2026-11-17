@@ -22,7 +22,7 @@ unit ClassBrowser;
 interface
 
 uses
-{$IFDEF WIN32}
+{$IFDEF MSWINDOWS}
   Windows, Classes, SysUtils, IntList, StatementList, Controls, ComCtrls, Graphics,
   CppParser, Forms, Vcl.Themes, cbutils;
 {$ENDIF}

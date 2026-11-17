@@ -86,3 +86,10 @@ part has been the occasion: rewriting a unit means reading all of it.
   (`2797fce`), differential test identical except the original's Win64 crashes; the same
   fixes in plain Delphi on `dev64` (`ca0effe`), whose IntList now matches the Delf one exactly.
   Next: `EditorList` (the scoped enum), then `Instances`.
+- **18 Nov 2026, event: enum aliases.** The scoped-enum problem met before `EditorList`: a
+  `.delf` unit's enums are scoped, so plain callers writing `lstLeft` break. The user asked
+  whether enums can be aliased, changing one file only. Answer, tested with dcc32: keep the type
+  scoped and export a constant per value (`const lstLeft = TLayoutShowType.lstLeft;`); plain
+  callers' assignments, sets, `case` labels, `in` and `for` all compile unchanged, RTTI
+  names too. One type, no casts. To be written by hand in `EditorList.delf`, and proposed for
+  delfc under `{ delf: migrate }`. Ideas like this one go to Delf's `docs/devcpp-delf-todo.md`.

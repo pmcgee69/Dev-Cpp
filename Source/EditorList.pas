@@ -632,7 +632,7 @@ begin
       end;
     lstBoth: begin
         Left := GetEditor(-1, fLeftPageControl);
-        Right := GetEditor(-1, fLeftPageControl);
+        Right := GetEditor(-1, fRightPageControl); // was fLeftPageControl: the left editor twice
       end;
   end;
 end;

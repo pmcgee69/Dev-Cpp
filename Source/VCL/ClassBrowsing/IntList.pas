@@ -17,12 +17,9 @@ type
   { TIntList class }
   TIntList = class;
 
-  // we don't work with int64, so make a typedef...
-  int64 = integer;
-
   PIntItem = ^TIntItem;
   TIntItem = record
-    FInt: int64;
+    FInt: Integer;
     FObject: TObject;
   end;
 
@@ -43,30 +40,30 @@ type
     procedure ExchangeItems(Index1, Index2: Integer);
     procedure Grow;
     procedure QuickSort(L, R: Integer; SCompare: TIntListSortCompare);
-    procedure InsertItem(Index: Integer; const S: int64);
+    procedure InsertItem(Index: Integer; const S: Integer);
     procedure SetSorted(Value: Boolean);
   protected
     procedure Error(const Msg: String; Data: Integer);
     procedure Changed; virtual;
     procedure Changing; virtual;
-    function Get(Index: Integer): int64;
+    function Get(Index: Integer): Integer;
     function GetCapacity: Integer;
     function GetCount: Integer;
     function GetObject(Index: Integer): TObject;
-    procedure Put(Index: Integer; const S: int64);
+    procedure Put(Index: Integer; const S: Integer);
     procedure PutObject(Index: Integer; AObject: TObject);
     procedure SetCapacity(NewCapacity: Integer);
     procedure SetUpdateState(Updating: Boolean);
   public
     destructor Destroy; override;
-    function Add(const S: int64): Integer;
-    function AddObject(const S: int64; AObject: TObject): Integer; virtual;
+    function Add(const S: Integer): Integer;
+    function AddObject(const S: Integer; AObject: TObject): Integer; virtual;
     procedure Clear;
     procedure Delete(Index: Integer);
     procedure Exchange(Index1, Index2: Integer);
-    function Find(const S: int64; var Index: Integer): Boolean; virtual;
-    function IndexOf(const S: int64): Integer;
-    procedure Insert(Index: Integer; const S: int64);
+    function Find(const S: Integer; var Index: Integer): Boolean; virtual;
+    function IndexOf(const S: Integer): Integer;
+    procedure Insert(Index: Integer; const S: Integer);
     procedure Sort; virtual;
     procedure CustomSort(Compare: TIntListSortCompare); virtual;
 
@@ -79,7 +76,7 @@ type
     property Sorted: Boolean read FSorted write SetSorted;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnChanging: TNotifyEvent read FOnChanging write FOnChanging;
-    property Integers[Index: Integer]: int64 read Get write Put; default;
+    property Integers[Index: Integer]: Integer read Get write Put; default;
     property Count: Integer read GetCount;
     property Objects[Index: Integer]: TObject read GetObject write PutObject;
   end;
@@ -98,14 +95,10 @@ begin
 end;
 
 procedure TIntList.Error(const Msg: String; Data: Integer);
-
-  function ReturnAddr: Pointer;
-  asm
-          MOV     EAX,[EBP+4]
-  end;
-
 begin
-  raise EStringListError.CreateFmt(Msg, [Data])at ReturnAddr;
+  // ReturnAddress, not x86 assembler ([EBP+4]), which reads the wrong place on Win64:
+  // there, every list error was an access violation
+  raise EStringListError.CreateFmt(Msg, [Data]) at ReturnAddress;
 end;
 
 const
@@ -113,7 +106,7 @@ const
   sListIndexError = 'List index Error';
   SSortedListError = 'Cannont insert to sorted list';
 
-function TIntList.Add(const S: Int64): Integer;
+function TIntList.Add(const S: Integer): Integer;
 begin
   if not Sorted then
     Result := FCount
@@ -121,11 +114,12 @@ begin
     case Duplicates of
       dupIgnore: Exit;
       dupError: Error(SDuplicateInt, 0);
+      dupAccept: ; // inserted beside the first
     end;
   InsertItem(Result, S);
 end;
 
-function TIntList.AddObject(const S: int64; AObject: TObject): Integer;
+function TIntList.AddObject(const S: Integer; AObject: TObject): Integer;
 begin
   Result := Add(S);
   PutObject(Result, AObject);
@@ -178,13 +172,13 @@ end;
 
 procedure TIntList.ExchangeItems(Index1, Index2: Integer);
 var
-  Temp: Int64;
+  Temp: Integer;
   TempObject: TObject;
   Item1, Item2: PIntItem;
 begin
   Item1 := @FList^[Index1];
   Item2 := @FList^[Index2];
-  Temp := Item1^.FInt; // was Integer(...): harmless, int64 is declared as integer above
+  Temp := Item1^.FInt;
   Item1^.FInt := Item2^.FInt;
   Item2^.FInt := Temp;
   TempObject := Item1^.FObject; // was through Integer casts: 32 bits, a pointer is 64 on Win64
@@ -192,7 +186,7 @@ begin
   Item2^.FObject := TempObject;
 end;
 
-function TIntList.Find(const S: Int64; var Index: Integer): Boolean;
+function TIntList.Find(const S: Integer; var Index: Integer): Boolean;
 var
   L, H, I: Integer;
 begin
@@ -202,7 +196,7 @@ begin
   while L <= H do begin
     I := (L + H) shr 1;
     if Flist^[I].FInt < S then
-      L := L + 1
+      L := I + 1 // was L + 1: right answers, but one place at a time
     else begin
       H := I - 1;
       if FList^[I].FInt = S then begin
@@ -215,7 +209,7 @@ begin
   Index := L;
 end;
 
-function TIntList.Get(Index: Integer): Int64;
+function TIntList.Get(Index: Integer): Integer;
 begin
   if (Index < 0) or (Index >= FCount) then
     Error(SListIndexError, Index);
@@ -252,7 +246,7 @@ begin
   SetCapacity(FCapacity + Delta);
 end;
 
-function TIntList.IndexOf(const S: Int64): Integer;
+function TIntList.IndexOf(const S: Integer): Integer;
 begin
   if not Sorted then begin
     for Result := 0 to GetCount - 1 do
@@ -263,7 +257,7 @@ begin
     Result := -1;
 end;
 
-procedure TIntList.Insert(Index: Integer; const S: Int64);
+procedure TIntList.Insert(Index: Integer; const S: Integer);
 begin
   if Sorted then
     Error(SSortedListError, 0);
@@ -272,7 +266,7 @@ begin
   InsertItem(Index, S);
 end;
 
-procedure TIntList.InsertItem(Index: Integer; const S: Int64);
+procedure TIntList.InsertItem(Index: Integer; const S: Integer);
 begin
   Changing;
   if FCount = FCapacity then
@@ -288,7 +282,7 @@ begin
   Changed;
 end;
 
-procedure TIntList.Put(Index: Integer; const S: Int64);
+procedure TIntList.Put(Index: Integer; const S: Integer);
 begin
   if Sorted then
     Error(SSortedListError, 0);
@@ -391,7 +385,7 @@ procedure TIntList.SaveToStream(Stream: TStream);
 var
   i: integer;
   N: integer;
-  Val: int64;
+  Val: Integer;
 begin
   N := count;
   Stream.WriteBuffer(N, sizeof(N));
@@ -417,7 +411,7 @@ procedure TIntList.LoadFromStream(Stream: TStream);
 var
   Size: Integer;
   i: integer;
-  N: int64;
+  N: Integer;
 begin
   {BeginUpdate;  }
   try

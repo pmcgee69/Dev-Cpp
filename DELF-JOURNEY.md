@@ -12,6 +12,11 @@ the Delphi compiler, or a test), so the log can say honestly what Delf itself co
 - **Log the whole journey**: the bugs found, and by what; the project's size as it goes.
 - **A parallel plain-Delphi branch, `dev64`**, takes the Delphi changes that the Delf
   rewrites inspire, where they come up: the same bug fixed without Delf.
+- **Two passes per unit** (the user, 18 Nov: *"just get it working for delf migrate ... then make
+  it idiomatic after"*). Pass 1: rename to `.delf` with `{ delf: migrate }`, the fewest changes
+  that build and behave the same, bugs found logged (and fixed on `dev64`). Pass 2, later:
+  idiomatic Delf (`match`, no `with`, typed sentinels, the migrate marker removed). From
+  Instances on; IntList and EditorList had both passes at once. "We can always adjust as we go."
 - *"The door holds for the file" was wishful thinking.* A `.delf` unit's enumerations are
   scoped in its output, which reaches into the plain units that use it. Maybe Delf's
   `{ delf: migrate }` can play a role there (Delf's BIG_TODO item 14).
@@ -96,6 +101,9 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
 - **The build**: `Source\DelfUnits.cmd`, the `.dproj`'s pre-build event, runs delfc when
   `DELF_POC` is set; otherwise the committed `.pas` is built. Dev-C++ builds without Delf.
 
+- **Delf already has `{ delf: scopedenums off }`** (SPEC §3.2): a file's enums stay unscoped in
+  the output, so plain callers need nothing. That is the pass-1 route; the aliases (below) keep
+  the type scoped and suit pass 2. Found after EditorList was done with the aliases.
 - **Enum constant aliases work** (EditorList): the scoped type plus `const lstLeft =
   TLayoutShowType.lstLeft`; `Tests.pas`'s 20 unqualified uses compiled unchanged.
 - **delfc drops comments inside `match` arms** (four in EditorList; one trailing comment moved

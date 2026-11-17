@@ -13,7 +13,8 @@ uses
   System.SysUtils,
   DUnitX.Loggers.Console,
   DUnitX.TestFramework,
-  Test.CppTokenizer in 'Test.CppTokenizer.pas';
+  Test.CppTokenizer in 'Test.CppTokenizer.pas',
+  Test.CppParser in 'Test.CppParser.pas';
 
 var
   Runner: ITestRunner;

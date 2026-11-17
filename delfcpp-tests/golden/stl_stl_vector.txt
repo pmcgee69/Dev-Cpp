@@ -1,0 +1,110 @@
+﻿preprocessor|_STL_VECTOR_H|||stl/stl_vector.h:57|parent 
+class|_Vector_base|struct||stl/stl_vector.h:72|parent 
+typedef|_Tp_alloc_type|typename __gnu_cxx::__alloc_traits::template rebind::other||stl/stl_vector.h:75|parent _Vector_base
+typedef|pointer|typename __gnu_cxx::__alloc_traits::pointer||stl/stl_vector.h:77|parent _Vector_base
+class|_Vector_impl|struct||stl/stl_vector.h:79|parent _Vector_base
+variable|_M_start|pointer||stl/stl_vector.h:82|parent _Vector_impl
+variable|_M_finish|pointer||stl/stl_vector.h:83|parent _Vector_impl
+variable|_M_end_of_storage|pointer||stl/stl_vector.h:84|parent _Vector_impl
+constructor|_Vector_impl|_Vector_impl|()|stl/stl_vector.h:87|parent _Vector_impl
+constructor|_Vector_impl|_Vector_impl|(_Tp_alloc_type const& __a)|stl/stl_vector.h:91|parent _Vector_impl
+function|_M_swap_data|void|(_Vector_impl& __x)|stl/stl_vector.h:101|parent _Vector_impl
+typedef|allocator_type|_Alloc||stl/stl_vector.h:110|parent _Vector_base
+function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl/stl_vector.h:113|parent _Vector_base
+function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl/stl_vector.h:117|parent _Vector_base
+function|get_allocator|allocator_type|()|stl/stl_vector.h:121|parent _Vector_base
+constructor|_Vector_base|_Vector_base|()|stl/stl_vector.h:125|parent _Vector_base
+constructor|_Vector_base|_Vector_base|(const allocator_type& __a)|stl/stl_vector.h:128|parent _Vector_base
+constructor|_Vector_base|_Vector_base|(size_t __n)|stl/stl_vector.h:131|parent _Vector_base
+constructor|_Vector_base|_Vector_base|(size_t __n, const allocator_type& __a)|stl/stl_vector.h:135|parent _Vector_base
+destructor|~_Vector_base|_Vector_base|()|stl/stl_vector.h:159|parent _Vector_base
+variable|_M_impl|_Vector_impl||stl/stl_vector.h:164|parent _Vector_base
+function|_M_allocate|pointer|(size_t __n)|stl/stl_vector.h:167|parent _Vector_base
+function|_M_deallocate|void|(pointer __p, size_t __n)|stl/stl_vector.h:171|parent _Vector_base
+function|_M_create_storage|void|(size_t __n)|stl/stl_vector.h:179|parent _Vector_base
+class|vector|class||stl/stl_vector.h:210|parent 
+typedef|_Alloc_value_type|typename _Alloc::value_type||stl/stl_vector.h:213|parent vector
+typedef|_Base|_Vector_base||stl/stl_vector.h:217|parent vector
+typedef|_Tp_alloc_type|typename _Base::_Tp_alloc_type||stl/stl_vector.h:218|parent vector
+typedef|_Alloc_traits|__gnu_cxx::__alloc_traits||stl/stl_vector.h:219|parent vector
+typedef|value_type|_Tp||stl/stl_vector.h:222|parent vector
+typedef|pointer|typename _Base::pointer||stl/stl_vector.h:223|parent vector
+typedef|const_pointer|typename _Alloc_traits::const_pointer||stl/stl_vector.h:224|parent vector
+typedef|reference|typename _Alloc_traits::reference||stl/stl_vector.h:225|parent vector
+typedef|const_reference|typename _Alloc_traits::const_reference||stl/stl_vector.h:226|parent vector
+typedef|iterator|__gnu_cxx::__normal_iterator||stl/stl_vector.h:227|parent vector
+typedef|const_iterator|__gnu_cxx::__normal_iterator||stl/stl_vector.h:229|parent vector
+typedef|const_reverse_iterator|std::reverse_iterator||stl/stl_vector.h:230|parent vector
+typedef|reverse_iterator|std::reverse_iterator||stl/stl_vector.h:231|parent vector
+typedef|size_type|size_t||stl/stl_vector.h:232|parent vector
+typedef|difference_type|ptrdiff_t||stl/stl_vector.h:233|parent vector
+typedef|allocator_type|_Alloc||stl/stl_vector.h:234|parent vector
+constructor|vector|vector|()|stl/stl_vector.h:249|parent vector
+constructor|vector|vector|(const allocator_type& __a)|stl/stl_vector.h:257|parent vector
+constructor|vector|vector|(size_type __n, const value_type& __value = value_type(), const allocator_type& __a = allocator_type())|stl/stl_vector.h:297|parent vector
+constructor|vector|vector|(const vector& __x)|stl/stl_vector.h:311|parent vector
+constructor|vector|vector|(_InputIterator __first, _InputIterator __last, const allocator_type& __a = allocator_type())|stl/stl_vector.h:400|parent vector
+destructor|~vector|vector|()|stl/stl_vector.h:414|parent vector
+function|operator=|vector&|(const vector& __x)|stl/stl_vector.h:427|parent vector
+function|assign|void|(size_type __n, const value_type& __val)|stl/stl_vector.h:479|parent vector
+function|assign|void|(_InputIterator __first, _InputIterator __last)|stl/stl_vector.h:503|parent vector
+function|begin|iterator|()|stl/stl_vector.h:538|parent vector
+function|begin|const_iterator|()|stl/stl_vector.h:547|parent vector
+function|end|iterator|()|stl/stl_vector.h:556|parent vector
+function|end|const_iterator|()|stl/stl_vector.h:565|parent vector
+function|rbegin|reverse_iterator|()|stl/stl_vector.h:574|parent vector
+function|rbegin|const_reverse_iterator|()|stl/stl_vector.h:583|parent vector
+function|rend|reverse_iterator|()|stl/stl_vector.h:592|parent vector
+function|rend|const_reverse_iterator|()|stl/stl_vector.h:601|parent vector
+function|size|size_type|()|stl/stl_vector.h:645|parent vector
+function|max_size|size_type|()|stl/stl_vector.h:650|parent vector
+function|resize|void|(size_type __new_size, value_type __x = value_type())|stl/stl_vector.h:704|parent vector
+function|capacity|size_type|()|stl/stl_vector.h:725|parent vector
+function|empty|bool|()|stl/stl_vector.h:734|parent vector
+function|reserve|void|(size_type __n)|stl/stl_vector.h:755|parent vector
+function|operator[]|reference|(size_type __n)|stl/stl_vector.h:770|parent vector
+function|operator[]|const_reference|(size_type __n)|stl/stl_vector.h:785|parent vector
+function|_M_range_check|void|(size_type __n)|stl/stl_vector.h:791|parent vector
+function|at|reference|(size_type __n)|stl/stl_vector.h:810|parent vector
+function|at|const_reference|(size_type __n)|stl/stl_vector.h:828|parent vector
+function|front|reference|()|stl/stl_vector.h:839|parent vector
+function|front|const_reference|()|stl/stl_vector.h:847|parent vector
+function|back|reference|()|stl/stl_vector.h:855|parent vector
+function|back|const_reference|()|stl/stl_vector.h:863|parent vector
+function|data|pointer|()|stl/stl_vector.h:878|parent vector
+function|data|const_pointer|()|stl/stl_vector.h:886|parent vector
+function|push_back|void|(const value_type& __x)|stl/stl_vector.h:901|parent vector
+function|pop_back|void|()|stl/stl_vector.h:937|parent vector
+function|insert|iterator|(iterator __position, const value_type& __x)|stl/stl_vector.h:973|parent vector
+function|insert|void|(iterator __position, size_type __n, const value_type& __x)|stl/stl_vector.h:1023|parent vector
+function|insert|void|(iterator __position, _InputIterator __first, _InputIterator __last)|stl/stl_vector.h:1050|parent vector
+function|erase|iterator|(iterator __position)|stl/stl_vector.h:1075|parent vector
+function|erase|iterator|(iterator __first, iterator __last)|stl/stl_vector.h:1096|parent vector
+function|swap|void|(vector& __x)|stl/stl_vector.h:1108|parent vector
+function|clear|void|()|stl/stl_vector.h:1125|parent vector
+function|_M_allocate_and_copy|pointer|(size_type __n, _ForwardIterator __first, _ForwardIterator __last)|stl/stl_vector.h:1135|parent vector
+function|_M_initialize_dispatch|void|(_Integer __n, _Integer __value, __true_type)|stl/stl_vector.h:1161|parent vector
+function|_M_initialize_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl/stl_vector.h:1172|parent vector
+function|_M_range_initialize|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_vector.h:1183|parent vector
+function|_M_range_initialize|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_vector.h:1197|parent vector
+function|_M_fill_initialize|void|(size_type __n, const value_type& __value)|stl/stl_vector.h:1212|parent vector
+function|_M_assign_dispatch|void|(_Integer __n, _Integer __val, __true_type)|stl/stl_vector.h:1239|parent vector
+function|_M_assign_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl/stl_vector.h:1245|parent vector
+function|_M_assign_aux|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_vector.h:1256|parent vector
+function|_M_assign_aux|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_vector.h:1262|parent vector
+function|_M_fill_assign|void|(size_type __n, const value_type& __val)|stl/stl_vector.h:1268|parent vector
+function|_M_insert_dispatch|void|(iterator __pos, _Integer __n, _Integer __val, __true_type)|stl/stl_vector.h:1279|parent vector
+function|_M_insert_dispatch|void|(iterator __pos, _InputIterator __first, _InputIterator __last, __false_type)|stl/stl_vector.h:1286|parent vector
+function|_M_range_insert|void|(iterator __pos, _InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_vector.h:1297|parent vector
+function|_M_range_insert|void|(iterator __pos, _ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_vector.h:1303|parent vector
+function|_M_fill_insert|void|(iterator __pos, size_type __n, const value_type& __x)|stl/stl_vector.h:1309|parent vector
+function|_M_insert_aux|void|(iterator __position, const value_type& __x)|stl/stl_vector.h:1323|parent vector
+function|_M_check_len|size_type|(size_type __n, const char* __s)|stl/stl_vector.h:1336|parent vector
+function|_M_erase_at_end|void|(pointer __pos)|stl/stl_vector.h:1350|parent vector
+function|operator==|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1403|parent 
+function|operator<|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1420|parent 
+function|operator!=|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1427|parent 
+function|operator>|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1433|parent 
+function|operator<=|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1439|parent 
+function|operator>=|bool|(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1445|parent 
+function|swap|void|(vector<_Tp, _Alloc>& __x, vector<_Tp, _Alloc>& __y)|stl/stl_vector.h:1451|parent 

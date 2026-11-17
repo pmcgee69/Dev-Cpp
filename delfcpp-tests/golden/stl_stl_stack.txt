@@ -1,0 +1,24 @@
+﻿preprocessor|_STL_STACK_H|||stl/stl_stack.h:57|parent 
+class|stack|class||stl/stl_stack.h:96|parent 
+typedef|_Sequence_value_type|typename _Sequence::value_type||stl/stl_stack.h:99|parent stack
+function|operator==|bool|(const stack<_Tp1, _Seq1>&, const stack<_Tp1, _Seq1>&)|stl/stl_stack.h:106|parent stack
+function|operator<|bool|(const stack<_Tp1, _Seq1>&, const stack<_Tp1, _Seq1>&)|stl/stl_stack.h:110|parent stack
+typedef|value_type|typename _Sequence::value_type||stl/stl_stack.h:113|parent stack
+typedef|reference|typename _Sequence::reference||stl/stl_stack.h:114|parent stack
+typedef|const_reference|typename _Sequence::const_reference||stl/stl_stack.h:115|parent stack
+typedef|size_type|typename _Sequence::size_type||stl/stl_stack.h:116|parent stack
+typedef|container_type|_Sequence||stl/stl_stack.h:117|parent stack
+variable|c|_Sequence||stl/stl_stack.h:121|parent stack
+constructor|stack|stack|(const _Sequence& __c = _Sequence())|stl/stl_stack.h:131|parent stack
+function|empty|bool|()|stl/stl_stack.h:146|parent stack
+function|size|size_type|()|stl/stl_stack.h:151|parent stack
+function|top|reference|()|stl/stl_stack.h:159|parent stack
+function|top|const_reference|()|stl/stl_stack.h:170|parent stack
+function|push|void|(const value_type& __x)|stl/stl_stack.h:186|parent stack
+function|pop|void|()|stl/stl_stack.h:212|parent stack
+function|operator==|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:243|parent 
+function|operator<|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:261|parent 
+function|operator!=|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:267|parent 
+function|operator>|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:273|parent 
+function|operator<=|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:279|parent 
+function|operator>=|bool|(const stack<_Tp, _Seq>& __x, const stack<_Tp, _Seq>& __y)|stl/stl_stack.h:285|parent 

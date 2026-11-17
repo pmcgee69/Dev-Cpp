@@ -1,0 +1,218 @@
+﻿preprocessor|_BASIC_STRING_H|||stl/basic_string.h:35|parent 
+class|basic_string|class||stl/basic_string.h:112|parent 
+typedef|_CharT_alloc_type|typename _Alloc::template rebind::other||stl/basic_string.h:114|parent basic_string
+typedef|traits_type|_Traits||stl/basic_string.h:118|parent basic_string
+typedef|value_type|typename _Traits::char_type||stl/basic_string.h:119|parent basic_string
+typedef|allocator_type|_Alloc||stl/basic_string.h:120|parent basic_string
+typedef|size_type|typename _CharT_alloc_type::size_type||stl/basic_string.h:121|parent basic_string
+typedef|difference_type|typename _CharT_alloc_type::difference_type||stl/basic_string.h:122|parent basic_string
+typedef|reference|typename _CharT_alloc_type::reference||stl/basic_string.h:123|parent basic_string
+typedef|const_reference|typename _CharT_alloc_type::const_reference||stl/basic_string.h:124|parent basic_string
+typedef|pointer|typename _CharT_alloc_type::pointer||stl/basic_string.h:125|parent basic_string
+typedef|const_pointer|typename _CharT_alloc_type::const_pointer||stl/basic_string.h:126|parent basic_string
+typedef|iterator|__gnu_cxx::__normal_iterator||stl/basic_string.h:127|parent basic_string
+typedef|const_iterator|__gnu_cxx::__normal_iterator||stl/basic_string.h:129|parent basic_string
+typedef|const_reverse_iterator|std::reverse_iterator||stl/basic_string.h:130|parent basic_string
+typedef|reverse_iterator|std::reverse_iterator||stl/basic_string.h:131|parent basic_string
+class|_Rep_base|struct||stl/basic_string.h:148|parent basic_string
+variable|_M_length|size_type||stl/basic_string.h:150|parent _Rep_base
+variable|_M_capacity|size_type||stl/basic_string.h:151|parent _Rep_base
+variable|_M_refcount|_Atomic_word||stl/basic_string.h:152|parent _Rep_base
+class|_Rep|struct||stl/basic_string.h:155|parent basic_string
+typedef|_Raw_bytes_alloc|typename _Alloc::template rebind::other||stl/basic_string.h:158|parent _Rep
+variable|_S_max_size|size_type||stl/basic_string.h:173|parent _Rep
+variable|_S_terminal|_CharT||stl/basic_string.h:174|parent _Rep
+variable|_S_empty_rep_storage|size_type|[]|stl/basic_string.h:178|parent _Rep
+function|_S_empty_rep|_Rep&|()|stl/basic_string.h:181|parent _Rep
+function|_M_is_leaked|bool|()|stl/basic_string.h:191|parent _Rep
+function|_M_is_shared|bool|()|stl/basic_string.h:195|parent _Rep
+function|_M_set_leaked|void|()|stl/basic_string.h:199|parent _Rep
+function|_M_set_sharable|void|()|stl/basic_string.h:203|parent _Rep
+function|_M_set_length_and_sharable|void|(size_type __n)|stl/basic_string.h:207|parent _Rep
+function|_M_refdata|_CharT*|()|stl/basic_string.h:222|parent _Rep
+function|_M_grab|_CharT*|(const _Alloc& __alloc1, const _Alloc& __alloc2)|stl/basic_string.h:226|parent _Rep
+function|_S_create|_Rep*|(size_type, size_type, const _Alloc&)|stl/basic_string.h:234|parent _Rep
+function|_M_dispose|void|(const _Alloc& __a)|stl/basic_string.h:237|parent _Rep
+function|_M_destroy|void|(const _Alloc&)|stl/basic_string.h:255|parent _Rep
+function|_M_refcopy|_CharT*|()|stl/basic_string.h:258|parent _Rep
+function|_M_clone|_CharT*|(const _Alloc&, size_type __res = 0)|stl/basic_string.h:268|parent _Rep
+class|_Alloc_hider|struct||stl/basic_string.h:272|parent basic_string
+constructor|_Alloc_hider|_Alloc_hider|(_CharT* __dat, const _Alloc& __a)|stl/basic_string.h:275|parent _Alloc_hider
+variable|_M_p|_CharT*||stl/basic_string.h:277|parent _Alloc_hider
+variable|npos|size_type||stl/basic_string.h:285|parent basic_string
+variable|_M_dataplus|_Alloc_hider||stl/basic_string.h:289|parent basic_string
+function|_M_data|_CharT*|()|stl/basic_string.h:292|parent basic_string
+function|_M_data|_CharT*|(_CharT* __p)|stl/basic_string.h:296|parent basic_string
+function|_M_rep|_Rep*|()|stl/basic_string.h:300|parent basic_string
+function|_M_ibegin|iterator|()|stl/basic_string.h:306|parent basic_string
+function|_M_iend|iterator|()|stl/basic_string.h:310|parent basic_string
+function|_M_leak|void|()|stl/basic_string.h:314|parent basic_string
+function|_M_check|size_type|(size_type __pos, const char* __s)|stl/basic_string.h:321|parent basic_string
+function|_M_check_length|void|(size_type __n1, size_type __n2, const char* __s)|stl/basic_string.h:329|parent basic_string
+function|_M_limit|size_type|(size_type __pos, size_type __off)|stl/basic_string.h:337|parent basic_string
+function|_M_disjunct|bool|(const _CharT* __s)|stl/basic_string.h:345|parent basic_string
+function|_M_copy|void|(_CharT* __d, const _CharT* __s, size_type __n)|stl/basic_string.h:354|parent basic_string
+function|_M_move|void|(_CharT* __d, const _CharT* __s, size_type __n)|stl/basic_string.h:363|parent basic_string
+function|_M_assign|void|(_CharT* __d, size_type __n, _CharT __c)|stl/basic_string.h:372|parent basic_string
+function|_S_copy_chars|void|(_CharT* __p, _Iterator __k1, _Iterator __k2)|stl/basic_string.h:384|parent basic_string
+function|_S_copy_chars|void|(_CharT* __p, iterator __k1, iterator __k2)|stl/basic_string.h:391|parent basic_string
+function|_S_copy_chars|void|(_CharT* __p, const_iterator __k1, const_iterator __k2)|stl/basic_string.h:395|parent basic_string
+function|_S_copy_chars|void|(_CharT* __p, _CharT* __k1, _CharT* __k2)|stl/basic_string.h:399|parent basic_string
+function|_S_copy_chars|void|(_CharT* __p, const _CharT* __k1, const _CharT* __k2)|stl/basic_string.h:403|parent basic_string
+function|_S_compare|int|(size_type __n1, size_type __n2)|stl/basic_string.h:407|parent basic_string
+function|_M_mutate|void|(size_type __pos, size_type __len1, size_type __len2)|stl/basic_string.h:420|parent basic_string
+function|_M_leak_hard|void|()|stl/basic_string.h:423|parent basic_string
+function|_S_empty_rep|_Rep&|()|stl/basic_string.h:426|parent basic_string
+constructor|basic_string|basic_string|()|stl/basic_string.h:439|parent basic_string
+constructor|basic_string|basic_string|(const _Alloc& __a)|stl/basic_string.h:448|parent basic_string
+constructor|basic_string|basic_string|(const basic_string& __str)|stl/basic_string.h:455|parent basic_string
+constructor|basic_string|basic_string|(const basic_string& __str, size_type __pos, size_type __n = npos)|stl/basic_string.h:462|parent basic_string
+constructor|basic_string|basic_string|(const basic_string& __str, size_type __pos, size_type __n, const _Alloc& __a)|stl/basic_string.h:471|parent basic_string
+constructor|basic_string|basic_string|(const _CharT* __s, size_type __n, const _Alloc& __a = _Alloc())|stl/basic_string.h:483|parent basic_string
+constructor|basic_string|basic_string|(const _CharT* __s, const _Alloc& __a = _Alloc())|stl/basic_string.h:490|parent basic_string
+constructor|basic_string|basic_string|(size_type __n, _CharT __c, const _Alloc& __a = _Alloc())|stl/basic_string.h:497|parent basic_string
+constructor|basic_string|basic_string|(_InputIterator __beg, _InputIterator __end, const _Alloc& __a = _Alloc())|stl/basic_string.h:532|parent basic_string
+destructor|~basic_string|basic_string|()|stl/basic_string.h:538|parent basic_string
+function|operator=|basic_string&|(const basic_string& __str)|stl/basic_string.h:546|parent basic_string
+function|operator=|basic_string&|(const _CharT* __s)|stl/basic_string.h:554|parent basic_string
+function|operator=|basic_string&|(_CharT __c)|stl/basic_string.h:565|parent basic_string
+function|begin|iterator|()|stl/basic_string.h:605|parent basic_string
+function|begin|const_iterator|()|stl/basic_string.h:616|parent basic_string
+function|end|iterator|()|stl/basic_string.h:624|parent basic_string
+function|end|const_iterator|()|stl/basic_string.h:635|parent basic_string
+function|rbegin|reverse_iterator|()|stl/basic_string.h:644|parent basic_string
+function|rbegin|const_reverse_iterator|()|stl/basic_string.h:653|parent basic_string
+function|rend|reverse_iterator|()|stl/basic_string.h:662|parent basic_string
+function|rend|const_reverse_iterator|()|stl/basic_string.h:671|parent basic_string
+function|size|size_type|()|stl/basic_string.h:715|parent basic_string
+function|length|size_type|()|stl/basic_string.h:721|parent basic_string
+function|max_size|size_type|()|stl/basic_string.h:726|parent basic_string
+function|resize|void|(size_type __n, _CharT __c)|stl/basic_string.h:740|parent basic_string
+function|resize|void|(size_type __n)|stl/basic_string.h:753|parent basic_string
+function|capacity|size_type|()|stl/basic_string.h:776|parent basic_string
+function|reserve|void|(size_type __res_arg = 0)|stl/basic_string.h:797|parent basic_string
+function|clear|void|()|stl/basic_string.h:803|parent basic_string
+function|empty|bool|()|stl/basic_string.h:811|parent basic_string
+function|operator[]|const_reference|(size_type __pos)|stl/basic_string.h:826|parent basic_string
+function|operator[]|reference|(size_type __pos)|stl/basic_string.h:843|parent basic_string
+function|at|const_reference|(size_type __n)|stl/basic_string.h:864|parent basic_string
+function|at|reference|(size_type __n)|stl/basic_string.h:883|parent basic_string
+function|operator+=|basic_string&|(const basic_string& __str)|stl/basic_string.h:932|parent basic_string
+function|operator+=|basic_string&|(const _CharT* __s)|stl/basic_string.h:941|parent basic_string
+function|operator+=|basic_string&|(_CharT __c)|stl/basic_string.h:950|parent basic_string
+function|append|basic_string&|(const basic_string& __str)|stl/basic_string.h:973|parent basic_string
+function|append|basic_string&|(const basic_string& __str, size_type __pos, size_type __n)|stl/basic_string.h:989|parent basic_string
+function|append|basic_string&|(const _CharT* __s, size_type __n)|stl/basic_string.h:998|parent basic_string
+function|append|basic_string&|(const _CharT* __s)|stl/basic_string.h:1006|parent basic_string
+function|append|basic_string&|(size_type __n, _CharT __c)|stl/basic_string.h:1021|parent basic_string
+function|append|basic_string&|(_InputIterator __first, _InputIterator __last)|stl/basic_string.h:1044|parent basic_string
+function|push_back|void|(_CharT __c)|stl/basic_string.h:1052|parent basic_string
+function|assign|basic_string&|(const basic_string& __str)|stl/basic_string.h:1067|parent basic_string
+function|assign|basic_string&|(const basic_string& __str, size_type __pos, size_type __n)|stl/basic_string.h:1100|parent basic_string
+function|assign|basic_string&|(const _CharT* __s, size_type __n)|stl/basic_string.h:1116|parent basic_string
+function|assign|basic_string&|(const _CharT* __s)|stl/basic_string.h:1128|parent basic_string
+function|assign|basic_string&|(size_type __n, _CharT __c)|stl/basic_string.h:1144|parent basic_string
+function|assign|basic_string&|(_InputIterator __first, _InputIterator __last)|stl/basic_string.h:1157|parent basic_string
+function|insert|void|(iterator __p, size_type __n, _CharT __c)|stl/basic_string.h:1185|parent basic_string
+function|insert|void|(iterator __p, _InputIterator __beg, _InputIterator __end)|stl/basic_string.h:1202|parent basic_string
+function|insert|basic_string&|(size_type __pos1, const basic_string& __str)|stl/basic_string.h:1233|parent basic_string
+function|insert|basic_string&|(size_type __pos1, const basic_string& __str, size_type __pos2, size_type __n)|stl/basic_string.h:1255|parent basic_string
+function|insert|basic_string&|(size_type __pos, const _CharT* __s, size_type __n)|stl/basic_string.h:1278|parent basic_string
+function|insert|basic_string&|(size_type __pos, const _CharT* __s)|stl/basic_string.h:1296|parent basic_string
+function|insert|basic_string&|(size_type __pos, size_type __n, _CharT __c)|stl/basic_string.h:1319|parent basic_string
+function|insert|iterator|(iterator __p, _CharT __c)|stl/basic_string.h:1337|parent basic_string
+function|erase|basic_string&|(size_type __pos = 0, size_type __n = npos)|stl/basic_string.h:1362|parent basic_string
+function|erase|iterator|(iterator __position)|stl/basic_string.h:1378|parent basic_string
+function|erase|iterator|(iterator __first, iterator __last)|stl/basic_string.h:1398|parent basic_string
+function|replace|basic_string&|(size_type __pos, size_type __n, const basic_string& __str)|stl/basic_string.h:1429|parent basic_string
+function|replace|basic_string&|(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2)|stl/basic_string.h:1451|parent basic_string
+function|replace|basic_string&|(size_type __pos, size_type __n1, const _CharT* __s, size_type __n2)|stl/basic_string.h:1476|parent basic_string
+function|replace|basic_string&|(size_type __pos, size_type __n1, const _CharT* __s)|stl/basic_string.h:1496|parent basic_string
+function|replace|basic_string&|(size_type __pos, size_type __n1, size_type __n2, _CharT __c)|stl/basic_string.h:1520|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, const basic_string& __str)|stl/basic_string.h:1538|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, const _CharT* __s, size_type __n)|stl/basic_string.h:1557|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, const _CharT* __s)|stl/basic_string.h:1578|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, size_type __n, _CharT __c)|stl/basic_string.h:1599|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, _InputIterator __k1, _InputIterator __k2)|stl/basic_string.h:1623|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, _CharT* __k1, _CharT* __k2)|stl/basic_string.h:1636|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, const _CharT* __k1, const _CharT* __k2)|stl/basic_string.h:1646|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, iterator __k1, iterator __k2)|stl/basic_string.h:1657|parent basic_string
+function|replace|basic_string&|(iterator __i1, iterator __i2, const_iterator __k1, const_iterator __k2)|stl/basic_string.h:1667|parent basic_string
+function|_M_replace_dispatch|basic_string&|(iterator __i1, iterator __i2, _Integer __n, _Integer __val, __true_type)|stl/basic_string.h:1700|parent basic_string
+function|_M_replace_dispatch|basic_string&|(iterator __i1, iterator __i2, _InputIterator __k1, _InputIterator __k2, __false_type)|stl/basic_string.h:1706|parent basic_string
+function|_M_replace_aux|basic_string&|(size_type __pos1, size_type __n1, size_type __n2, _CharT __c)|stl/basic_string.h:1710|parent basic_string
+function|_M_replace_safe|basic_string&|(size_type __pos1, size_type __n1, const _CharT* __s, size_type __n2)|stl/basic_string.h:1714|parent basic_string
+function|_S_construct_aux|_CharT*|(_InIterator __beg, _InIterator __end, const _Alloc& __a, __false_type)|stl/basic_string.h:1721|parent basic_string
+function|_S_construct_aux|_CharT*|(_Integer __beg, _Integer __end, const _Alloc& __a, __true_type)|stl/basic_string.h:1732|parent basic_string
+function|_S_construct_aux_2|_CharT*|(size_type __req, _CharT __c, const _Alloc& __a)|stl/basic_string.h:1738|parent basic_string
+function|_S_construct|_CharT*|(_InIterator __beg, _InIterator __end, const _Alloc& __a)|stl/basic_string.h:1743|parent basic_string
+function|_S_construct|_CharT*|(_InIterator __beg, _InIterator __end, const _Alloc& __a, input_iterator_tag)|stl/basic_string.h:1752|parent basic_string
+function|_S_construct|_CharT*|(_FwdIterator __beg, _FwdIterator __end, const _Alloc& __a, forward_iterator_tag)|stl/basic_string.h:1759|parent basic_string
+function|_S_construct|_CharT*|(size_type __req, _CharT __c, const _Alloc& __a)|stl/basic_string.h:1763|parent basic_string
+function|copy|size_type|(_CharT* __s, size_type __n, size_type __pos = 0)|stl/basic_string.h:1780|parent basic_string
+function|swap|void|(basic_string& __s)|stl/basic_string.h:1790|parent basic_string
+function|c_str|_CharT*|()|stl/basic_string.h:1800|parent basic_string
+function|data|_CharT*|()|stl/basic_string.h:1810|parent basic_string
+function|get_allocator|allocator_type|()|stl/basic_string.h:1817|parent basic_string
+function|find|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:1833|parent basic_string
+function|find|size_type|(const basic_string& __str, size_type __pos = 0)|stl/basic_string.h:1847|parent basic_string
+function|find|size_type|(const _CharT* __s, size_type __pos = 0)|stl/basic_string.h:1861|parent basic_string
+function|find|size_type|(_CharT __c, size_type __pos = 0)|stl/basic_string.h:1878|parent basic_string
+function|rfind|size_type|(const basic_string& __str, size_type __pos = npos)|stl/basic_string.h:1892|parent basic_string
+function|rfind|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:1908|parent basic_string
+function|rfind|size_type|(const _CharT* __s, size_type __pos = npos)|stl/basic_string.h:1921|parent basic_string
+function|rfind|size_type|(_CharT __c, size_type __pos = npos)|stl/basic_string.h:1938|parent basic_string
+function|find_first_of|size_type|(const basic_string& __str, size_type __pos = 0)|stl/basic_string.h:1953|parent basic_string
+function|find_first_of|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:1969|parent basic_string
+function|find_first_of|size_type|(const _CharT* __s, size_type __pos = 0)|stl/basic_string.h:1982|parent basic_string
+function|find_first_of|size_type|(_CharT __c, size_type __pos = 0)|stl/basic_string.h:2001|parent basic_string
+function|find_last_of|size_type|(const basic_string& __str, size_type __pos = npos)|stl/basic_string.h:2017|parent basic_string
+function|find_last_of|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:2033|parent basic_string
+function|find_last_of|size_type|(const _CharT* __s, size_type __pos = npos)|stl/basic_string.h:2046|parent basic_string
+function|find_last_of|size_type|(_CharT __c, size_type __pos = npos)|stl/basic_string.h:2065|parent basic_string
+function|find_first_not_of|size_type|(const basic_string& __str, size_type __pos = 0)|stl/basic_string.h:2080|parent basic_string
+function|find_first_not_of|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:2097|parent basic_string
+function|find_first_not_of|size_type|(const _CharT* __s, size_type __pos = 0)|stl/basic_string.h:2110|parent basic_string
+function|find_first_not_of|size_type|(_CharT __c, size_type __pos = 0)|stl/basic_string.h:2128|parent basic_string
+function|find_last_not_of|size_type|(const basic_string& __str, size_type __pos = npos)|stl/basic_string.h:2143|parent basic_string
+function|find_last_not_of|size_type|(const _CharT* __s, size_type __pos, size_type __n)|stl/basic_string.h:2160|parent basic_string
+function|find_last_not_of|size_type|(const _CharT* __s, size_type __pos = npos)|stl/basic_string.h:2173|parent basic_string
+function|find_last_not_of|size_type|(_CharT __c, size_type __pos = npos)|stl/basic_string.h:2191|parent basic_string
+function|substr|basic_string|(size_type __pos = 0, size_type __n = npos)|stl/basic_string.h:2206|parent basic_string
+function|compare|int|(const basic_string& __str)|stl/basic_string.h:2225|parent basic_string
+function|compare|int|(size_type __pos, size_type __n, const basic_string& __str)|stl/basic_string.h:2257|parent basic_string
+function|compare|int|(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2)|stl/basic_string.h:2284|parent basic_string
+function|compare|int|(const _CharT* __s)|stl/basic_string.h:2301|parent basic_string
+function|compare|int|(size_type __pos, size_type __n1, const _CharT* __s)|stl/basic_string.h:2325|parent basic_string
+function|compare|int|(size_type __pos, size_type __n1, const _CharT* __s, size_type __n2)|stl/basic_string.h:2353|parent basic_string
+function|operator+|basic_string|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2365|parent 
+function|operator+|basic_string|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2381|parent 
+function|operator+|basic_string|(_CharT __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2392|parent 
+function|operator+|basic_string|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2402|parent 
+function|operator+|basic_string|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, _CharT __rhs)|stl/basic_string.h:2418|parent 
+function|operator==|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2486|parent 
+function|operator==|__enable_if::__type|(const basic_string<_CharT>& __lhs, const basic_string<_CharT>& __rhs)|stl/basic_string.h:2493|parent 
+function|operator==|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2507|parent 
+function|operator==|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2519|parent 
+function|operator!=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2532|parent 
+function|operator!=|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2544|parent 
+function|operator!=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2556|parent 
+function|operator<|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2569|parent 
+function|operator<|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2581|parent 
+function|operator<|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2593|parent 
+function|operator>|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2606|parent 
+function|operator>|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2618|parent 
+function|operator>|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2630|parent 
+function|operator<=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2643|parent 
+function|operator<=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2655|parent 
+function|operator<=|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2667|parent 
+function|operator>=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2680|parent 
+function|operator>=|bool|(const basic_string<_CharT, _Traits, _Alloc>& __lhs, const _CharT* __rhs)|stl/basic_string.h:2692|parent 
+function|operator>=|bool|(const _CharT* __lhs, const basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2704|parent 
+function|swap|void|(basic_string<_CharT, _Traits, _Alloc>& __lhs, basic_string<_CharT, _Traits, _Alloc>& __rhs)|stl/basic_string.h:2717|parent 
+function|operator>>|basic_istream &|(basic_istream<_CharT, _Traits>& __is, basic_string<_CharT, _Traits, _Alloc>& __str)|stl/basic_string.h:2735|parent 
+function|operator>>|basic_istream &|(basic_istream<char>& __is, basic_string<char>& __str)|stl/basic_string.h:2740|parent 
+function|operator<<|basic_ostream &|(basic_ostream<_CharT, _Traits>& __os, const basic_string<_CharT, _Traits, _Alloc>& __str)|stl/basic_string.h:2753|parent 
+function|getline|basic_istream &|(basic_istream<_CharT, _Traits>& __is, basic_string<_CharT, _Traits, _Alloc>& __str, _CharT __delim)|stl/basic_string.h:2776|parent 
+function|getline|basic_istream &|(basic_istream<_CharT, _Traits>& __is, basic_string<_CharT, _Traits, _Alloc>& __str)|stl/basic_string.h:2793|parent 
+function|getline|basic_istream &|(basic_istream<char>& __in, basic_string<char>& __str, char __delim)|stl/basic_string.h:2799|parent 

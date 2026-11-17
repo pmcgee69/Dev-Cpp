@@ -1,0 +1,8 @@
+﻿class|ProtoClass|class||SimpleClass.cpp:1|parent 
+constructor|ProtoClass|ProtoClass|()|SimpleClass.cpp:3|parent ProtoClass
+constructor|ProtoClass|ProtoClass|(int a)|SimpleClass.cpp:4|parent ProtoClass
+constructor|ProtoClass|ProtoClass|(int a, int b)|SimpleClass.cpp:5|parent ProtoClass
+destructor|~ProtoClass|ProtoClass|()|SimpleClass.cpp:6|parent ProtoClass
+function|Foo|void|()|SimpleClass.cpp:7|parent ProtoClass
+function|Bar|void|()|SimpleClass.cpp:9|parent ProtoClass
+function|main|int|()|SimpleClass.cpp:32|parent 

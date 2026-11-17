@@ -1,0 +1,69 @@
+﻿class|_D3DVECTOR|struct||float3.cpp:1|parent 
+class|D3DVECTOR|struct||float3.cpp:5|parent 
+variable|x|float||float3.cpp:2|parent _D3DVECTOR
+variable|x|float||float3.cpp:2|parent D3DVECTOR
+variable|y|float||float3.cpp:3|parent _D3DVECTOR
+variable|y|float||float3.cpp:3|parent D3DVECTOR
+variable|z|float||float3.cpp:4|parent _D3DVECTOR
+variable|z|float||float3.cpp:4|parent D3DVECTOR
+class|D3DXVECTOR3|struct||float3.cpp:7|parent 
+class|D3DXVECTOR3|struct||float3.cpp:34|parent 
+class|LPD3DXVECTOR3|struct*||float3.cpp:34|parent 
+constructor|D3DXVECTOR3|D3DXVECTOR3|()|float3.cpp:9|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|()|float3.cpp:9|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|()|float3.cpp:9|parent LPD3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const FLOAT *pf)|float3.cpp:10|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const FLOAT *pf)|float3.cpp:10|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const FLOAT *pf)|float3.cpp:10|parent LPD3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const D3DVECTOR& v)|float3.cpp:11|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const D3DVECTOR& v)|float3.cpp:11|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(const D3DVECTOR& v)|float3.cpp:11|parent LPD3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(FLOAT fx, FLOAT fy, FLOAT fz)|float3.cpp:12|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(FLOAT fx, FLOAT fy, FLOAT fz)|float3.cpp:12|parent D3DXVECTOR3
+constructor|D3DXVECTOR3|D3DXVECTOR3|(FLOAT fx, FLOAT fy, FLOAT fz)|float3.cpp:12|parent LPD3DXVECTOR3
+function|FLOAT*|operator|()|float3.cpp:14|parent D3DXVECTOR3
+function|FLOAT*|operator|()|float3.cpp:14|parent D3DXVECTOR3
+function|FLOAT*|operator|()|float3.cpp:14|parent LPD3DXVECTOR3
+function|FLOAT*|operator const|()|float3.cpp:15|parent D3DXVECTOR3
+function|FLOAT*|operator const|()|float3.cpp:15|parent D3DXVECTOR3
+function|FLOAT*|operator const|()|float3.cpp:15|parent LPD3DXVECTOR3
+function|operator +=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:17|parent D3DXVECTOR3
+function|operator +=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:17|parent D3DXVECTOR3
+function|operator +=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:17|parent LPD3DXVECTOR3
+function|operator -=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:18|parent D3DXVECTOR3
+function|operator -=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:18|parent D3DXVECTOR3
+function|operator -=|D3DXVECTOR3&|(const D3DXVECTOR3&)|float3.cpp:18|parent LPD3DXVECTOR3
+function|operator *=|D3DXVECTOR3&|(FLOAT)|float3.cpp:19|parent D3DXVECTOR3
+function|operator *=|D3DXVECTOR3&|(FLOAT)|float3.cpp:19|parent D3DXVECTOR3
+function|operator *=|D3DXVECTOR3&|(FLOAT)|float3.cpp:19|parent LPD3DXVECTOR3
+function|operator /=|D3DXVECTOR3&|(FLOAT)|float3.cpp:20|parent D3DXVECTOR3
+function|operator /=|D3DXVECTOR3&|(FLOAT)|float3.cpp:20|parent D3DXVECTOR3
+function|operator /=|D3DXVECTOR3&|(FLOAT)|float3.cpp:20|parent LPD3DXVECTOR3
+function|operator +|D3DXVECTOR3|()|float3.cpp:22|parent D3DXVECTOR3
+function|operator +|D3DXVECTOR3|()|float3.cpp:22|parent D3DXVECTOR3
+function|operator +|D3DXVECTOR3|()|float3.cpp:22|parent LPD3DXVECTOR3
+function|operator -|D3DXVECTOR3|()|float3.cpp:23|parent D3DXVECTOR3
+function|operator -|D3DXVECTOR3|()|float3.cpp:23|parent D3DXVECTOR3
+function|operator -|D3DXVECTOR3|()|float3.cpp:23|parent LPD3DXVECTOR3
+function|operator +|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:25|parent D3DXVECTOR3
+function|operator +|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:25|parent D3DXVECTOR3
+function|operator +|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:25|parent LPD3DXVECTOR3
+function|operator -|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:26|parent D3DXVECTOR3
+function|operator -|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:26|parent D3DXVECTOR3
+function|operator -|D3DXVECTOR3|(const D3DXVECTOR3&)|float3.cpp:26|parent LPD3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT)|float3.cpp:27|parent D3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT)|float3.cpp:27|parent D3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT)|float3.cpp:27|parent LPD3DXVECTOR3
+function|operator /|D3DXVECTOR3|(FLOAT)|float3.cpp:28|parent D3DXVECTOR3
+function|operator /|D3DXVECTOR3|(FLOAT)|float3.cpp:28|parent D3DXVECTOR3
+function|operator /|D3DXVECTOR3|(FLOAT)|float3.cpp:28|parent LPD3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT, const struct D3DXVECTOR3&)|float3.cpp:30|parent D3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT, const struct D3DXVECTOR3&)|float3.cpp:30|parent D3DXVECTOR3
+function|operator *|D3DXVECTOR3|(FLOAT, const struct D3DXVECTOR3&)|float3.cpp:30|parent LPD3DXVECTOR3
+function|operator ==|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:32|parent D3DXVECTOR3
+function|operator ==|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:32|parent D3DXVECTOR3
+function|operator ==|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:32|parent LPD3DXVECTOR3
+function|operator !=|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:33|parent D3DXVECTOR3
+function|operator !=|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:33|parent D3DXVECTOR3
+function|operator !=|WINBOOL|(const D3DXVECTOR3&)|float3.cpp:33|parent LPD3DXVECTOR3
+class|float3|class||float3.cpp:36|parent 

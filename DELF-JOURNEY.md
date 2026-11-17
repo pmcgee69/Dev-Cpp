@@ -17,6 +17,11 @@ the Delphi compiler, or a test), so the log can say honestly what Delf itself co
   that build and behave the same, bugs found logged (and fixed on `dev64`). Pass 2, later:
   idiomatic Delf (`match`, no `with`, typed sentinels, the migrate marker removed). From
   Instances on; IntList and EditorList had both passes at once. "We can always adjust as we go."
+- **Tests first, one test for both versions** (the user, 18 Nov: *"Creating and applying tests ..
+  v important"*; *"a single test for both the Delf code and the Delphi version. This is a great
+  argument for functions that don't mess with state too much."*). `delfcpp-tests\` (DUnitX), the
+  same source on both branches, is built against the original units, `dev64` and `delf-units`,
+  Win32 and Win64 (`run-tests.cmd`). The original fails the Regression tests: the bugs pinned.
 - *"The door holds for the file" was wishful thinking.* A `.delf` unit's enumerations are
   scoped in its output, which reaches into the plain units that use it. Maybe Delf's
   `{ delf: migrate }` can play a role there (Delf's BIG_TODO item 14).
@@ -52,7 +57,7 @@ of ~56,750 original lines, 2.2%).
 | 1 | `VCL\ClassBrowsing\IntList` | 445 → 418 | `2797fce` | `ca0effe` | Differential test, 1.2M operations, Win32 + Win64; class browser in the 64-bit build |
 | 2 | `EditorList` | 661 → 650 | `b3437a0` | `6ea85d8` | Dev-C++'s own `TestEditorList` (switched off upstream), run in both 64-bit builds: same result in each (see below) |
 | 3 | `Instances` | 158 → 167 | `dee5f73` (pass 1), `76f8a86` (fixes) | `1197288` | Pass 1 the door: delfc's output = the original byte for byte, but the marker comment. Then builds, both branches and platforms; `WM_COPYDATA` sent to the 64-bit build, with and without a terminator |
-| 4 | `VCL\ClassBrowsing\CppTokenizer` | 804 → 806 | `d79bf6b` (pass 1) | | Pass 1 the door: delfc's output = the original but the marker. Bug reading: not yet |
+| 4 | `VCL\ClassBrowsing\CppTokenizer` | 804 → 815 | `d79bf6b` (pass 1), `289ae81` (fixes, tests) | `16f2ad6` | **The first unit with committed tests**: `delfcpp-tests`, 19 DUnitX tests, the same source run against the original, `dev64` and Delf, Win32 + Win64 |
 
 ## Errors found
 
@@ -81,12 +86,16 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 18 | `Instances.GetPreviousInstance` | `while True` waits for a window that may never match | Hangs at startup if the mutex is another Dev-C++ exe's (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
 | 19 | `Utils.SetPath` | `GetEnvironmentVariable` given `SizeOf` (4,098) for a 2,049-character array | A PATH of 2,049..4,097 characters overruns the stack; longer appends junk (dormant: callers skip that branch; this machine's PATH is 2,529) | Claude, grepping for the class #16 belongs to | `9c8ce9e`, `7c9a568` |
 | 20 | `Tools\Packman\InstallFiles` | Same class: `GetWindowsDirectory`/`GetSystemDirectory` given `SizeOf` (2,050) for 1,025 characters; and `SysDir` given `WinDir`'s size | Overrun only with a Windows directory past 1,025 characters | Claude, same search | not changed (separate tool) |
+| 21 | `CppTokenizer.SkipDoubleQuotes`, `SkipSingleQuote` | An unterminated literal at the end, or a `\` before the `#0`, steps over the terminator | Live: the class browser reads on through memory past the text (unterminated strings are common while typing) | Claude, while rewriting; the tests show it | `289ae81`, `16f2ad6` |
+| 22 | the same routines | After an escape the loop skips a character | Live, **in well-formed code**: `"\\\\"` and `"\n\\"` lose their closing quote and swallow the code after | Claude, tracing #21 | `289ae81`, `16f2ad6` |
+| 23 | `CppTokenizer.GetWord` | `a[` at the end steps past the `#0` | Live: reads past the text; on Win64 a token picked up another string from the heap | Claude, while rewriting; the tests show it | `289ae81`, `16f2ad6` |
+| 24 | `CppTokenizer.OpenFile`, `OpenStream` | Bytes allocated, terminator written at a character offset; ANSI bytes read as UTF-16; buffer never freed | Heap overrun and leak (dormant: unused) | Claude, while rewriting | logged only |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
 arm is now written (*Delf*; `dev64` states it too).
 
-**Tally so far:** Claude 17 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 21 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Fixes (beyond the errors)
@@ -100,6 +109,7 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
   reach); `with` gone from `GetPreviousEditor` (flattened to early exits); `GetEditorFromTag`
   stops at its first match; `UpdateLayout`'s last `else if`, always true, a plain `else`.
 - **Instances**: none yet. Pass 1 only (the rename and `{ delf: migrate }`); its fixes are bugs (above).
+- **CppTokenizer**: none beyond the bugs. Pass 1 only.
 
 ## Lessons
 
@@ -127,6 +137,15 @@ Changes made while a unit was rewritten that fix no bug but remove a hazard or a
 - **Unicode-era Win32 calls** are a class to grep for: `SizeOf` of a `Char` array given where an
   API counts characters (three in Instances).
 
+- **One test, three versions works**: a test sees only the interface, so the same DUnitX source
+  builds against the original, `dev64` and Delf by unit path alone. The original passing every
+  characterization test and failing only the regression tests is the cleanest evidence yet.
+- **Reads past the end vary with memory**: the original failed 5 regression tests on Win32 and
+  6 on Win64; what lies past the text decides. A guard text after the `#0` makes it visible.
+- **Win64 and DUnitX**: `Assert.AreEqual(6, List.Count)` doesn't compile for Win64 (`Count` isn't
+  the literal's type); `AreEqual<Integer>`. **`.cmd` files**: `set` resets the error level (a
+  `.bat` doesn't), and `set X=1 & ...` stores `"1 "`: take the exit code first, quote every set.
+
 ## Takeaways
 
 Updated as units land; the short version of what this project shows.
@@ -140,7 +159,10 @@ Updated as units land; the short version of what this project shows.
    (tested) keep the interface while the unit is migrated.
 4. **Run old and new the same way and compare**, even when the test is imperfect: EditorList's
    stale test failed identically in both, then passed identically without the focus asserts.
-5. **Win64 is where old Delphi breaks quietly**: casts of pointers to `Integer`, x86 assembler
+5. **Pure code is testable code** (the user): CppTokenizer, text in and tokens out, gave the
+   most bugs and the easiest tests; EditorList, all state, needed the running app. Pass 2 can
+   pull pure decisions out (`LayoutFor(LeftCount, RightCount)`).
+6. **Win64 is where old Delphi breaks quietly**: casts of pointers to `Integer`, x86 assembler
    that still assembles, 1-byte `Boolean` callbacks. Two of eleven errors the compiler refused;
    the rest compiled.
 
@@ -169,3 +191,6 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026.** CppTokenizer, pass 1 (`d79bf6b`, the door exact). Next: read it for bugs
   (804 lines; pointer-walking `PChar` code, so look for reads past the end), then fixes on both
   branches, then a differential test of the tokens it produces over real headers.
+- **18 Nov 2026.** Tests made first-class (the user). CppTokenizer read: three live bugs (reads
+  past the end; a misread escape in well-formed code) fixed on both branches (`289ae81`,
+  `16f2ad6`), with `delfcpp-tests`: one DUnitX source, three versions, two platforms.

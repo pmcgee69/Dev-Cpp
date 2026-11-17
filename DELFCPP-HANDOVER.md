@@ -34,7 +34,9 @@ Units in Delf: **IntList** (`2797fce`), **EditorList** (`b3437a0`), **Instances*
 `76f8a86` fixes). Plain fixes on `dev64`: `ca0effe`, `6ea85d8`, `1197288`, `7c9a568`; on both:
 `Utils.SetPath`. 20 errors logged (Claude 17, dcc64 2, test 1, Delf's rules 0).
 
-**Next:** CppTokenizer pass 1 is done (`d79bf6b`): read it for bugs, fix on both branches, test. It is the fourth unit, `VCL\ClassBrowsing\CppTokenizer` (the class browser; uses
+**Next:** CppTokenizer is done (pass 1 `d79bf6b`, fixes and the first committed tests `289ae81` /
+`16f2ad6`). Then: tests for the earlier units (IntList, Instances' `GetSentStructData`, EditorList's
+layout as a pure `LayoutFor`), into `delfcpp-tests`. The fourth unit was `VCL\ClassBrowsing\CppTokenizer` (the class browser; uses
 IntList's neighbours). Then onward through the class browser (`CppPreprocessor`: its `#if`
 operands are read with 32-bit `StrToIntDef`; `CppParser`).
 
@@ -56,6 +58,11 @@ operands are read with 32-bit `StrToIntDef`; `CppParser`).
 
 ## The per-unit recipe
 
+0. **Tests first** (the user): add a `delfcpp-tests\Test.<Unit>.pas` (DUnitX) that pins what the
+   unit does now (category Characterization), run `delfcpp-testsun-tests.cmd`. Each bug fixed
+   later gets a Regression test that fails on the original. The same test files go on both
+   branches; one source tests the original, `dev64` and Delf (by unit path), Win32 and Win64.
+   Add the unit's original path to `UNITS` in `run-tests.cmd`. Prefer pure functions to test.
 1. `git mv X.pas X.delf`; add `{ delf: migrate }` on its own line in the opening comments.
 2. Transpile (step below); compare delfc's `.pas` with the original: should be identical but the
    marker. Commit "X in Delf, pass 1".

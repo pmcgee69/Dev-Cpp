@@ -61,6 +61,12 @@ of ~56,750 original lines, 2.2%).
 
 ## Errors found
 
+**All of these are upstream code** (checked 18 Nov: the Win64 port, `dcef9cf`, touches none of
+the faulty lines). Those whose Effect starts "Win64:" (1-8) are correct on Win32 and break only
+in a Win64 build: IntList's `[EBP+4]` is the right way to find a caller on x86. The rest bite
+upstream's own Win32 builds too; for CppTokenizer the tests show it, run against `master`
+itself (Win32: 5 regression tests fail).
+
 **Found by**: *Claude* (reading the code, while porting or rewriting), *Delf* (a Delf rule or
 delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test showed it).
 

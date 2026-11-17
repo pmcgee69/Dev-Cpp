@@ -8,7 +8,7 @@ unit Test.CppTokenizer;
 
   Category "Characterization": what the tokenizer did before any change, on well-formed C++;
   every version must pass. Category "Regression": the bugs found in DelfCpp (DELF-JOURNEY.md,
-  errors 21-22); the original fails these. }
+  errors 21-23); the original fails these. }
 
 interface
 

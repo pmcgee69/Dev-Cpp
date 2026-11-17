@@ -13,6 +13,9 @@ Delphi compiles. Both are committed, so Dev-C++ builds without delfc.
 file under `Source`; without it, it says so and the committed `.pas` files are built.
 delfc replaces only a `.pas` it wrote itself, and stops at one edited since.
 
+The journey (every unit, every bug found and what found it, the size as it goes) is logged in
+`DELF-JOURNEY.md` at the top of the repository.
+
 ## The units
 
 | Unit | Delf | What the rewrite changed and found |

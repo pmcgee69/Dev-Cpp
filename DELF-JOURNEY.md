@@ -78,12 +78,14 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 16 | `Instances` (3 calls) | `SizeOf(Buffer)` (bytes) as a count of characters to `GetClassName`, `GetModuleFileName(Ex)` | Windows may write 1,024 characters into 512 (dormant: single-instance code is off) | Claude, while rewriting | `76f8a86`, `1197288` |
 | 17 | `Instances` callback | Process handle not closed when `GetModuleFileNameEx` fails | A handle leak (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
 | 18 | `Instances.GetPreviousInstance` | `while True` waits for a window that may never match | Hangs at startup if the mutex is another Dev-C++ exe's (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
+| 19 | `Utils.SetPath` | `GetEnvironmentVariable` given `SizeOf` (4,098) for a 2,049-character array | A PATH of 2,049..4,097 characters overruns the stack; longer appends junk (dormant: callers skip that branch; this machine's PATH is 2,529) | Claude, grepping for the class #16 belongs to | `9c8ce9e`, `7c9a568` |
+| 20 | `Tools\Packman\InstallFiles` | Same class: `GetWindowsDirectory`/`GetSystemDirectory` given `SizeOf` (2,050) for 1,025 characters; and `SysDir` given `WinDir`'s size | Overrun only with a Windows directory past 1,025 characters | Claude, same search | not changed (separate tool) |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
 arm is now written (*Delf*; `dev64` states it too).
 
-**Tally so far:** Claude 15 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 17 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Fixes (beyond the errors)
@@ -160,3 +162,6 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026.** The two-pass way adopted (the user). Instances, pass 1 (`dee5f73`, the door
   exact), then four bugs fixed on both branches (`76f8a86`, `1197288`); one live
   (`WM_COPYDATA` read past its data), three dormant in the single-instance code.
+- **18 Nov 2026.** Grepped Dev-C++ for Instances' `SizeOf`-as-character-count class: two more
+  (`Utils.SetPath`, fixed on both branches; Packman, logged). A bug found once is a pattern to
+  search for everywhere.

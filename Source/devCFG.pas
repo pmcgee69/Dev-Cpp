@@ -579,6 +579,8 @@ type
     fToolbarMain: boolean; // These ones follow the enable/x-offset/y-offset patern
     fToolbarMainX: integer;
     fToolbarMainY: integer;
+    fToolbarBoxWidths: String; // the toolbars' drop-down boxes, px at 96 dpi: classes,members,compilers (0 = the .dfm's)
+    fToolbarShowText: boolean; // text labels beside the toolbar icons
     fToolbarIconSize: integer; // toolbar icons, px at 96 dpi; dragged with the grip under the toolbars
     fToolbarEdit: boolean;
     fToolbarEditX: integer;
@@ -697,6 +699,8 @@ type
 
     //Toolbars
     property ToolbarIconSize: integer read fToolbarIconSize write fToolbarIconSize;
+    property ToolbarShowText: boolean read fToolbarShowText write fToolbarShowText;
+    property ToolbarBoxWidths: String read fToolbarBoxWidths write fToolbarBoxWidths;
     property ToolbarMain: boolean read fToolbarMain write fToolbarMain;
     property ToolbarMainX: integer read fToolbarMainX write fToolbarMainX;
     property ToolbarMainY: integer read fToolbarMainY write fToolbarMainY;
@@ -988,6 +992,8 @@ begin
   fToolbarMainX := 11;
   fToolbarMainY := 2;
   fToolbarIconSize := 19;
+  fToolbarShowText := FALSE;
+  fToolbarBoxWidths := '';
   fToolbarEdit := TRUE;
   fToolbarEditX := 196;
   fToolbarEditY := 2;

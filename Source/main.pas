@@ -908,6 +908,11 @@ type
     fToolbarGrip: TPanel;
     fGripDragging: Boolean;
     fGripStartY, fGripStartSize, fGripRows: Integer;
+    fToolbarTextItem, fToolbarTextSep: TMenuItem;
+    fComboBaseWidths: TArray<Integer>; // the toolbars' drop-down boxes at 96 dpi, as in the .dfm
+    fBoxGrips: TArray<TPanel>; // a handle on each box's right edge: drag to resize the box
+    fBoxDragIndex, fBoxStartX, fBoxStartWidth: Integer;
+    fZoomInAction, fZoomOutAction: TAction;
 
     fPreviousHeight: integer; // stores MessageControl height to be able to restore to previous height
     fTools: TToolController; // tool list controller
@@ -977,8 +982,21 @@ type
     procedure PageControlCloseButtonMouseLeave(Sender: TObject);
     procedure PageControlCloseButtonMouseUp(Sender: TObject;
       Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure CreateToolbarGrip;
+    procedure CreateRuntimeUI;
     procedure ApplyToolbarIconSize;
+    procedure ToolbarTextItemClick(Sender: TObject);
+    procedure RestoreToolbarPositions;
+    function ToolbarBoxes: TArray<TComboBox>;
+    function ToolbarWidthScale: Double;
+    function SavedBoxWidth(Index: Integer): Integer;
+    procedure SaveBoxWidth(Index, Width96: Integer);
+    procedure BoxGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure BoxGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure BoxGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure ZoomEditors(Delta: Integer);
+    procedure ZoomInExecute(Sender: TObject);
+    procedure ZoomOutExecute(Sender: TObject);
+    procedure ZoomUpdate(Sender: TObject);
     procedure ToolbarGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ToolbarGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure ToolbarGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -6115,7 +6133,6 @@ procedure TMainForm.FormMouseWheel(Sender: TObject; Shift: TShiftState; WheelDel
 var
   e: TEditor;
   State: TKeyboardState;
-  I: integer;
 begin
 
   // Check if control is pressed
@@ -6125,27 +6142,9 @@ begin
   // Check if we're focussing on an editor and holding ctrl
   if Assigned(e) and (Screen.ActiveControl = e.Text) and ((State[vk_Control] and 128) <> 0) then begin
 
-    for I := 0 to pred(EditorList.PageCount) do begin
-      e := fEditorList[I];
-
-      // If so, set the font size of all editors...
-      if WheelDelta > 0 then begin
-        e.Text.Font.Size := Max(1, e.Text.Font.Size + 1);
-        e.Text.Gutter.Font.Size := Max(1, e.Text.Gutter.Font.Size + 1);
-      end else begin
-        e.Text.Font.Size := Max(1, e.Text.Font.Size - 1);
-        e.Text.Gutter.Font.Size := Max(1, e.Text.Gutter.Font.Size - 1);
-      end;
-    end;
-
-    // And set the corresponding option
-    if WheelDelta > 0 then begin
-      devEditor.Font.Size := Max(1, devEditor.Font.Size + 1);
-      devEditor.Gutterfont.Size := Max(1, devEditor.Gutterfont.Size + 1);
-    end else if WheelDelta < 0 then begin
-      devEditor.Font.Size := Max(1, devEditor.Font.Size - 1);
-      devEditor.Gutterfont.Size := Max(1, devEditor.Gutterfont.Size - 1);
-    end;
+    // If so, set the font size of all editors, and the corresponding option
+    if WheelDelta <> 0 then
+      ZoomEditors(Sign(WheelDelta));
 
     // We don't like to send the actual scrolling message to the editor when zooming
     Abort;
@@ -6263,10 +6262,20 @@ begin
   TrackPopupMenu(GotoBookmarksItem.Handle, TPM_LEFTALIGN or TPM_LEFTBUTTON, pt.x, pt.y, 0, Self.Handle, nil);
 end;
 
+const
+  cUIFontGrowPt = 2; // the UI text, past the .dfm's (Heebo, -13 px at 96 dpi, about 10 pt)
+
 procedure TMainForm.FormCreate(Sender: TObject);
 
 begin
   fFirstShow := true;
+
+  // Larger UI text: the form's font, which the tabs, trees, panels and toolbar labels
+  // follow; the status bar, which otherwise uses the system font; and the menus'
+  Font.Size := Font.Size + cUIFontGrowPt;
+  Statusbar.UseSystemFont := False;
+  Statusbar.ParentFont := True;
+  Screen.MenuFont.Size := Screen.MenuFont.Size + cUIFontGrowPt;
 
   // Backup PATH variable
   devDirs.OriginalPath := GetEnvironmentVariable('PATH');
@@ -6356,23 +6365,8 @@ begin
   actStatusbarExecute(nil);
 
   // Set toolbars to previous state.
-  // 1) position
-  tbMain.Left := devData.ToolbarMainX;
-  tbMain.Top := devData.ToolbarMainY;
-  tbEdit.Left := devData.ToolbarEditX;
-  tbEdit.Top := devData.ToolbarEditY;
-  tbCompile.Left := devData.ToolbarCompileX;
-  tbCompile.Top := devData.ToolbarCompileY;
-  tbProject.Left := devData.ToolbarProjectX;
-  tbProject.Top := devData.ToolbarProjectY;
-  tbSpecials.Left := devData.ToolbarSpecialsX;
-  tbSpecials.Top := devData.ToolbarSpecialsY;
-  tbSearch.Left := devData.ToolbarSearchX;
-  tbSearch.Top := devData.ToolbarSearchY;
-  tbClasses.Left := devData.ToolbarClassesX;
-  tbClasses.Top := devData.ToolbarClassesY;
-  tbCompilers.Left := devData.ToolbarCompilersX;
-  tbCompilers.Top := devData.ToolbarCompilersY;
+  // 1) position (again once the theme has sized them, below)
+  RestoreToolbarPositions;
 
   // Set toolbars to previous state.
   // 2) Visibility
@@ -6450,7 +6444,6 @@ begin
   begin
     LoadTheme;
   end;
-
   // Configure parser, code completion, class browser
   UpdateClassBrowsing;
 
@@ -6551,6 +6544,14 @@ begin
     Exit;
 
   fFirstShow := false;
+
+  // The toolbars where they were last time. Not before now: the theme resizes them and
+  // the window is the .dfm's width until it is shown (maximized, say), and either one
+  // makes the control bar wrap them into new rows. Queued, so the window has its size.
+  TThread.ForceQueue(nil, procedure
+    begin
+      RestoreToolbarPositions;
+    end);
 
   // Below a possible fix for the disappearing of controls in MessageControl is given:
   // Toggle visibility of bottom page control here.
@@ -7381,11 +7382,87 @@ const
   cToolbarIconMax     = 64;
   cToolbarIconDefault = 19; // the .dfm's size
 
-// A thin strip under the toolbars; dragging it down makes the toolbar icons bigger.
-procedure TMainForm.CreateToolbarGrip;
+// Made once, in code: the toolbars' grip and text-label switch, and the zoom keys.
+procedure TMainForm.CreateRuntimeUI;
+
+  function ZoomAction(const Caption: String; OnExecute: TNotifyEvent;
+    const Keys: array of TShortCut): TAction;
+  var
+    I: Integer;
+  begin
+    Result := TAction.Create(Self);
+    Result.ActionList := ActionList;
+    Result.Category := 'View';
+    Result.Caption := Caption;
+    Result.OnExecute := OnExecute;
+    Result.OnUpdate := ZoomUpdate;
+    Result.ShortCut := Keys[0];
+    for I := 1 to High(Keys) do
+      Result.SecondaryShortCuts.AddObject(ShortCutToText(Keys[I]), TObject(Keys[I]));
+  end;
+
+  procedure AddToViewMenu(Action: TAction);
+  var
+    Item: TMenuItem;
+  begin
+    Item := TMenuItem.Create(Self);
+    Item.Action := Action;
+    ViewMenu.Add(Item);
+  end;
+
+var
+  Boxes: TArray<TComboBox>;
+  Grip: TPanel;
+  I: Integer;
 begin
   if Assigned(fToolbarGrip) then
     Exit;
+
+  // Toolbars > Show Text Labels, in the main menu and the toolbars' right-click menu
+  fToolbarTextSep := TMenuItem.Create(Self);
+  fToolbarTextSep.Caption := '-';
+  ToolbarsItem.Add(fToolbarTextSep);
+  fToolbarTextItem := TMenuItem.Create(Self);
+  fToolbarTextItem.Caption := 'Show Text &Labels';
+  fToolbarTextItem.OnClick := ToolbarTextItemClick;
+  ToolbarsItem.Add(fToolbarTextItem);
+
+  // View > Zoom In / Zoom Out. Not Ctrl+Shift: SynEdit's Fold All and Unfold All
+  fZoomInAction := ZoomAction('Zoom &In', ZoomInExecute,
+    [ShortCut(VK_OEM_PLUS, [ssCtrl]), ShortCut(VK_ADD, [ssCtrl])]);
+  fZoomOutAction := ZoomAction('Zoom &Out', ZoomOutExecute,
+    [ShortCut(VK_OEM_MINUS, [ssCtrl]), ShortCut(VK_SUBTRACT, [ssCtrl])]);
+  AddToViewMenu(fZoomInAction);
+  AddToViewMenu(fZoomOutAction);
+
+  // The drop-down boxes: their .dfm widths at 96 dpi, and a handle on each one's right
+  // edge. A toolbar orders what it holds by Left, so the handle's is set before it joins.
+  Boxes := ToolbarBoxes;
+  SetLength(fComboBaseWidths, Length(Boxes));
+  SetLength(fBoxGrips, Length(Boxes));
+  for I := 0 to High(Boxes) do
+  begin
+    fComboBaseWidths[I] := MulDiv(Boxes[I].Width, 96, CurrentPPI);
+    Grip := TPanel.Create(Self);
+    Grip.Left := Boxes[I].Left + Boxes[I].Width;
+    Grip.Top := Boxes[I].Top;
+    Grip.Width := MulDiv(6, CurrentPPI, 96);
+    Grip.Height := Boxes[I].Height;
+    Grip.BevelOuter := bvNone;
+    Grip.Caption := '';
+    Grip.Cursor := crSizeWE;
+    Grip.Hint := 'Drag to resize the box';
+    Grip.ShowHint := True;
+    Grip.Tag := I;
+    Grip.OnMouseDown := BoxGripMouseDown;
+    Grip.OnMouseMove := BoxGripMouseMove;
+    Grip.OnMouseUp := BoxGripMouseUp;
+    Grip.Parent := Boxes[I].Parent;
+    fBoxGrips[I] := Grip;
+  end;
+  fBoxDragIndex := -1;
+
+  // A thin strip under the toolbars; dragging it down makes the toolbar icons bigger
   fToolbarGrip := TPanel.Create(Self);
   fToolbarGrip.Parent := Self;
   fToolbarGrip.Align := alTop;
@@ -7401,20 +7478,41 @@ begin
   fToolbarGrip.OnMouseUp := ToolbarGripMouseUp;
 end;
 
-// Sizes the toolbar icons and buttons from devData.ToolbarIconSize at this form's DPI.
+// A toolbar label from an action's caption: no hotkey, no trailing "...", and an
+// ampersand doubled so the button shows it rather than underlining the next letter.
+function ToolbarLabel(const Caption: String): String;
+begin
+  Result := StripHotkey(Caption);
+  if Result.EndsWith('...') then
+    Result := Result.Substring(0, Result.Length - 3)
+  else if Result.EndsWith(#$2026) then
+    Result := Result.Substring(0, Result.Length - 1);
+  Result := Result.Replace('&', '&&');
+end;
+
+// Sizes the toolbar icons, buttons, labels and drop-down boxes from
+// devData.ToolbarIconSize at this form's DPI.
 procedure TMainForm.ApplyToolbarIconSize;
 var
-  Px, PadW, PadH: Integer;
-  Bars: TArray<TToolBar>;
+  Px, PadW, PadH, BasePt, ComboPt, LabelPt, I: Integer;
+  Scale, WidthScale: Double;
+  IconBars, ComboBars: TArray<TToolBar>;
+  Combos: TArray<TComboBox>;
   Bar: TToolBar;
+  Btn: TToolButton;
 begin
-  CreateToolbarGrip;
+  CreateRuntimeUI;
   // The PNG themes (Style 0) keep their fixed-size lists, and there is nothing to drag
   fToolbarGrip.Visible := Assigned(fToolbarImages) and (tbMain.Images = fToolbarImages);
+  fToolbarTextItem.Visible := fToolbarGrip.Visible;
+  fToolbarTextSep.Visible := fToolbarGrip.Visible;
+  for I := 0 to High(fBoxGrips) do
+    fBoxGrips[I].Visible := fToolbarGrip.Visible;
   if not fToolbarGrip.Visible then
     Exit;
+  fToolbarTextItem.Checked := devData.ToolbarShowText;
 
-  // A value outside the range is an older .ini without the key (read as 1) or a hand edit
+  // Outside the range: a hand edit of the .ini
   if (devData.ToolbarIconSize < cToolbarIconMin) or (devData.ToolbarIconSize > cToolbarIconMax) then
     devData.ToolbarIconSize := cToolbarIconDefault;
 
@@ -7422,23 +7520,191 @@ begin
   if (fToolbarImages.Width <> Px) or (fToolbarImages.Height <> Px) then
     fToolbarImages.Size := Px;
 
+  // Text grows with the icons: the drop-down boxes' font in step, so the boxes fill the
+  // row's height as at the .dfm's size; the labels and the boxes' widths by half as
+  // much, so they don't crowd the toolbars off the screen. Never smaller than the .dfm's.
+  Scale   := devData.ToolbarIconSize / cToolbarIconDefault;
+  BasePt  := Font.Size;
+  ComboPt := Max(BasePt, Round(BasePt * Scale));
+  LabelPt := Max(BasePt, Round(BasePt * (1 + (Scale - 1) / 2)));
+  WidthScale := ToolbarWidthScale;
+
   // The .dfm's buttons are 29 x 28 around 19 px icons: keep that margin
   PadW := MulDiv(10, CurrentPPI, 96);
   PadH := MulDiv(9, CurrentPPI, 96);
-  Bars := [tbMain, tbCompile, tbProject, tbEdit, tbSearch, tbSpecials];
+  IconBars  := [tbMain, tbCompile, tbProject, tbEdit, tbSearch, tbSpecials];
+  ComboBars := [tbClasses, tbCompilers];
+  Combos    := ToolbarBoxes;
+
   ToolbarDock.DisableAlign;
   try
-    for Bar in Bars do
+    for Bar in IconBars do
     begin
       Bar.ButtonWidth  := Px + PadW;
       Bar.ButtonHeight := Px + PadH;
+      Bar.ParentFont   := False;
+      Bar.Font.Size    := LabelPt;
+      Bar.List         := devData.ToolbarShowText; // the label beside the icon, not under it
+      Bar.ShowCaptions := devData.ToolbarShowText;
+      for I := 0 to Bar.ButtonCount - 1 do
+      begin
+        Btn := Bar.Buttons[I];
+        if Btn.Style in [tbsSeparator, tbsDivider] then
+          Continue;
+        Btn.AutoSize := devData.ToolbarShowText; // each button as wide as its own label
+        if devData.ToolbarShowText then
+          if Btn.Action is TCustomAction then
+            Btn.Caption := ToolbarLabel(TCustomAction(Btn.Action).Caption)
+          else
+            Btn.Caption := ToolbarLabel(Btn.Caption);
+      end;
     end;
+
+    // The rows' height for the boxes too, which a toolbar centres in it
+    for Bar in ComboBars do
+      Bar.ButtonHeight := Px + PadH;
+    // A box's width: the one dragged to, else the .dfm's; either grows with the icons
+    for I := 0 to High(Combos) do
+    begin
+      Combos[I].ParentFont := False;
+      Combos[I].Font.Size  := ComboPt;
+      Combos[I].Width      := MulDiv(Round(SavedBoxWidth(I) * WidthScale), CurrentPPI, 96);
+      fBoxGrips[I].Height  := Combos[I].Height;
+      fBoxGrips[I].Width   := MulDiv(6, CurrentPPI, 96);
+    end;
+
     // A control bar sets each toolbar a little way into its row (the .dfm's Top = 2),
     // so the row needs a margin past the buttons or their bottoms are cut off
     ToolbarDock.RowSize := Px + PadH + MulDiv(4, CurrentPPI, 96);
   finally
     ToolbarDock.EnableAlign;
   end;
+end;
+
+function TMainForm.ToolbarBoxes: TArray<TComboBox>;
+begin
+  Result := [cmbClasses, cmbMembers, cmbCompilers]; // the order of devData.ToolbarBoxWidths
+end;
+
+// How much the boxes' widths and the labels grow with the icons: half as fast.
+function TMainForm.ToolbarWidthScale: Double;
+begin
+  Result := Max(1.0, 1 + (devData.ToolbarIconSize / cToolbarIconDefault - 1) / 2);
+end;
+
+// A box's width at 96 dpi and the .dfm's icon size: the one dragged to, else the .dfm's.
+function TMainForm.SavedBoxWidth(Index: Integer): Integer;
+var
+  Parts: TArray<String>;
+begin
+  Result := 0;
+  Parts := devData.ToolbarBoxWidths.Split([',']);
+  if Index < Length(Parts) then
+    Result := StrToIntDef(Parts[Index].Trim, 0);
+  if Result <= 0 then
+    Result := fComboBaseWidths[Index];
+end;
+
+procedure TMainForm.SaveBoxWidth(Index, Width96: Integer);
+var
+  Parts: TArray<String>;
+begin
+  Parts := devData.ToolbarBoxWidths.Split([',']);
+  if Length(Parts) < Length(fComboBaseWidths) then
+    SetLength(Parts, Length(fComboBaseWidths));
+  Parts[Index] := IntToStr(Width96);
+  devData.ToolbarBoxWidths := String.Join(',', Parts);
+end;
+
+procedure TMainForm.BoxGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if Button <> mbLeft then
+    Exit;
+  fBoxDragIndex  := TPanel(Sender).Tag;
+  fBoxStartX     := Mouse.CursorPos.X; // screen coordinates: the handle moves with the box
+  fBoxStartWidth := ToolbarBoxes[fBoxDragIndex].Width;
+end;
+
+procedure TMainForm.BoxGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+var
+  Box: TComboBox;
+  W: Integer;
+begin
+  if fBoxDragIndex < 0 then
+    Exit;
+  Box := ToolbarBoxes[fBoxDragIndex];
+  W := Max(MulDiv(80, CurrentPPI, 96), fBoxStartWidth + Mouse.CursorPos.X - fBoxStartX);
+  if W = Box.Width then
+    Exit;
+  Box.Width := W;
+  // Saved at 96 dpi and the .dfm's icon size, so it follows both from here on
+  SaveBoxWidth(fBoxDragIndex, Round(MulDiv(W, 96, CurrentPPI) / ToolbarWidthScale));
+end;
+
+procedure TMainForm.BoxGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  fBoxDragIndex := -1;
+end;
+
+// The toolbars where they were when Dev-C++ last closed. Run once the toolbars have
+// their final size: resizing them makes the control bar reflow them.
+procedure TMainForm.RestoreToolbarPositions;
+begin
+  // One at a time, not inside DisableAlign: the control bar places each band as it is
+  // moved, while one realign at the end keeps its old band order and wraps them again
+  tbMain.Left := devData.ToolbarMainX;
+  tbMain.Top := devData.ToolbarMainY;
+  tbEdit.Left := devData.ToolbarEditX;
+  tbEdit.Top := devData.ToolbarEditY;
+  tbCompile.Left := devData.ToolbarCompileX;
+  tbCompile.Top := devData.ToolbarCompileY;
+  tbProject.Left := devData.ToolbarProjectX;
+  tbProject.Top := devData.ToolbarProjectY;
+  tbSpecials.Left := devData.ToolbarSpecialsX;
+  tbSpecials.Top := devData.ToolbarSpecialsY;
+  tbSearch.Left := devData.ToolbarSearchX;
+  tbSearch.Top := devData.ToolbarSearchY;
+  tbClasses.Left := devData.ToolbarClassesX;
+  tbClasses.Top := devData.ToolbarClassesY;
+  tbCompilers.Left := devData.ToolbarCompilersX;
+  tbCompilers.Top := devData.ToolbarCompilersY;
+end;
+
+procedure TMainForm.ToolbarTextItemClick(Sender: TObject);
+begin
+  devData.ToolbarShowText := not devData.ToolbarShowText;
+  ApplyToolbarIconSize;
+end;
+
+// Changes every editor's font, and the saved one, by Delta points: Ctrl+Scroll,
+// Ctrl+= and Ctrl+-.
+procedure TMainForm.ZoomEditors(Delta: Integer);
+var
+  I: Integer;
+  e: TEditor;
+begin
+  for I := 0 to pred(EditorList.PageCount) do begin
+    e := fEditorList[I];
+    e.Text.Font.Size := Max(1, e.Text.Font.Size + Delta);
+    e.Text.Gutter.Font.Size := Max(1, e.Text.Gutter.Font.Size + Delta);
+  end;
+  devEditor.Font.Size := Max(1, devEditor.Font.Size + Delta);
+  devEditor.Gutterfont.Size := Max(1, devEditor.Gutterfont.Size + Delta);
+end;
+
+procedure TMainForm.ZoomInExecute(Sender: TObject);
+begin
+  ZoomEditors(+1);
+end;
+
+procedure TMainForm.ZoomOutExecute(Sender: TObject);
+begin
+  ZoomEditors(-1);
+end;
+
+procedure TMainForm.ZoomUpdate(Sender: TObject);
+begin
+  TAction(Sender).Enabled := fEditorList.GetEditor <> nil;
 end;
 
 procedure TMainForm.ToolbarGripMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);

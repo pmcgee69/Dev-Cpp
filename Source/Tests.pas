@@ -42,12 +42,13 @@ type
     function TestActions: Boolean;
     function TestCompilerOptions: Boolean;
     function TestAll: Boolean;
+    function TestUndo: Boolean; // DelfCpp: the undo reports upstream (errors 29, 30)
   end;
 
 // The test switch: devcpp.exe -runtests <file> [-tests <names>] runs the named tests (default
-// editor,editorlist) once the main window is up, writes one line per test to <file> and a
+// editor,editorlist,undo) once the main window is up, writes one line per test to <file> and a
 // summary, then closes Dev-C++ with exit code 0 (all passed) or 1. Names: editor, editorlist,
-// actions (runs every enabled action, so dialogs open), compileroptions (deletes and re-finds
+// undo, actions (runs every enabled action, so dialogs open), compileroptions (deletes and re-finds
 // the compiler sets, and saves them). Use -c <folder> to keep the run off your own settings.
 function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
 procedure RunTestSwitch(const ResultFile, Selection: String);
@@ -55,13 +56,14 @@ procedure RunTestSwitch(const ResultFile, Selection: String);
 implementation
 
 uses
-  Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils;
+  Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils,
+  System.TypInfo, SynEditTextBuffer;
 
 function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
 begin
   Result := FindCmdLineSwitch('runtests', ResultFile, True, [clstValueNextParam]);
   if not FindCmdLineSwitch('tests', Selection, True, [clstValueNextParam]) then
-    Selection := 'editor,editorlist';
+    Selection := 'editor,editorlist,undo';
 end;
 
 function CaptureRawStack(P: System.PExceptionRecord): Pointer; forward;
@@ -73,6 +75,7 @@ begin
   try
     if Name = 'editor' then Result := Test.TestEditor
     else if Name = 'editorlist' then Result := Test.TestEditorList
+    else if Name = 'undo' then Result := Test.TestUndo
     else if Name = 'actions' then Result := Test.TestActions
     else Result := Test.TestCompilerOptions;
   except
@@ -100,7 +103,7 @@ begin
     Lines.Add(Format('Dev-C++ %s, %d-bit, %s', [DEVCPP_VERSION, SizeOf(Pointer) * 8,
       FormatDateTime('yyyy-mm-dd hh:nn:ss', Now)]));
     for Name in SplitString(LowerCase(Selection), ',') do begin
-      if not MatchStr(Name, ['editor', 'editorlist', 'actions', 'compileroptions']) then begin
+      if not MatchStr(Name, ['editor', 'editorlist', 'undo', 'actions', 'compileroptions']) then begin
         Lines.Add('UNKNOWN ' + Name);
         Inc(Failures);
         Continue;
@@ -725,6 +728,114 @@ begin
     MainForm.SetStatusbarMessage('Close editor without saving');
     MainForm.EditorList.CloseEditor(e);
 
+    Result := True;
+  except
+    on E: Exception do
+      Result := Failed(E);
+  end;
+end;
+
+// DelfCpp: the cases people reported to Embarcadero/Dev-Cpp, as they describe them. Each fails
+// on upstream (error 29: Enter on an indented line was recorded twice for undo).
+function TTestClass.TestUndo: Boolean;
+const
+  // a small program, typed key by key: #10 is Enter, so auto-indent does the indenting
+  Program_ = 'int main()'#10'{'#10'int a[3] = {1, 2, 3};'#10'for (int i = 0; i < 3; i++) {'#10 +
+    'if (a[i] > 1) {'#10'a[i]--;'#10'}'#10'}'#10'return 0;'#10'}'#10;
+var
+  e: TEditor;
+  Cycle: Integer;
+  Before, Typed: String;
+
+  procedure TypeKeys(const Keys: String);
+  var
+    K: Integer;
+  begin
+    for K := 1 to Length(Keys) do
+      if Keys[K] = #10 then
+        e.Text.CommandProcessor(ecLineBreak, #0, nil)
+      else
+        e.Text.CommandProcessor(ecChar, Keys[K], nil);
+    ShowUpdate(0);
+  end;
+
+  function Records(List: TSynEditUndoList): String;
+  var
+    K: Integer;
+  begin
+    Result := '';
+    for K := 0 to List.ItemCount - 1 do
+      with List.Items[K] do
+        Result := Result + Format('%d %s (%d,%d)-(%d,%d) [%s] #%d'#13#10, [K,
+          GetEnumName(TypeInfo(TSynChangeReason), Ord(ChangeReason)), ChangeStartPos.Char,
+          ChangeStartPos.Line, ChangeEndPos.Char, ChangeEndPos.Line,
+          ChangeStr.Replace(#9, '\t').Replace(#13, '\r').Replace(#10, '\n'), ChangeNumber]);
+  end;
+
+  procedure UndoAll;
+  begin
+    while e.Text.UndoList.CanUndo do
+      e.Text.Undo;
+  end;
+
+  procedure RedoAll;
+  begin
+    while e.Text.RedoList.CanUndo do
+      e.Text.Redo;
+  end;
+
+begin
+  try
+    MainForm.actNewSource.Execute;
+    e := MainForm.EditorList.GetEditor;
+    e.Activate;
+
+    // #146 (and #129): "inserting a new line under the brackets and finally hitting CTRL-Z to
+    // undo [it] also deletes the line below the newly created line"
+    MainForm.SetStatusbarMessage('#146: Enter after an indented line, then one undo');
+    e.Text.Lines.Text := 'void f()'#13#10'{'#13#10#9'int a[3];'#13#10#9'int b;'#13#10'}';
+    e.Text.ClearUndo;
+    Before := e.Text.Lines.Text;
+    e.Text.CaretXY := BufferCoord(Length(e.Text.Lines[2]) + 1, 3); // the end of "<tab>int a[3];"
+    e.Text.CommandProcessor(ecLineBreak, #0, nil);
+    Assert(e.Text.Lines.Count = 6, 'Enter added a line');
+    e.Text.Undo;
+    Assert(e.Text.Lines.Text = Before, '#146: one undo of Enter changed other lines: ' +
+      IntToStr(e.Text.Lines.Count) + ' lines, was 5');
+
+    // #183, #234, #238, #338: typing with auto-indent, then Ctrl+Z repeatedly raised
+    // "Invalid stringlist index" and removed closing brackets
+    MainForm.SetStatusbarMessage('#183: type a program, undo everything');
+    e.Text.Lines.Clear;
+    e.Text.ClearUndo;
+    TypeKeys(Program_);
+    Typed := e.Text.Lines.Text;
+    var UndoRecords := Records(e.Text.UndoList);
+    UndoAll;
+    TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-records.txt'),
+      'undo list after typing:'#13#10 + UndoRecords + #13#10'redo list after undoing:'#13#10 + Records(e.Text.RedoList));
+    Assert(e.Text.Text.IsEmpty, '#183: not empty after undoing everything: ' + IntToStr(e.Text.Lines.Count) + ' lines');
+
+    // #192, #252, #273: undo and redo "again and again" deleted or changed code
+    for Cycle := 1 to 3 do begin
+      MainForm.SetStatusbarMessage(Format('#252: redo everything, cycle %d', [Cycle]));
+      RedoAll;
+      if e.Text.Lines.Text <> Typed then begin // keep both, to compare
+        TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-typed.txt'), Typed);
+        TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-redone.txt'), e.Text.Lines.Text);
+      end;
+      Assert(e.Text.Lines.Text = Typed, Format('#252: redo cycle %d gave different text (both in %%TEMP%%\devcpp-undo-*.txt)', [Cycle]));
+      MainForm.SetStatusbarMessage(Format('#252: undo everything, cycle %d', [Cycle]));
+      UndoAll;
+      Assert(e.Text.Text.IsEmpty, Format('#252: undo cycle %d left text', [Cycle]));
+    end;
+
+    // error 30: identifiers that hashed to the highlighter's stale asm slots
+    MainForm.SetStatusbarMessage('error 30: identifiers df, ka, mo, eeee');
+    TypeKeys('int df, ka, mo, eeee;'#10);
+
+    e.Text.Modified := False;
+    MainForm.EditorList.CloseEditor(e);
     Result := True;
   except
     on E: Exception do

@@ -163,6 +163,11 @@ type
     fParenthCompleteState: TSymbolCompleteState;
     fArrayCompleteState: TSymbolCompleteState;
     fBraceCompleteState: TSymbolCompleteState;
+    // Auto-inserted ) and ] still ahead of the caret on line fPendingLine: typing ) or ] steps
+    // over the next one while there are any, so "(1" then ")" gives "(1)", not "(1))"
+    fParenthPending: Integer;
+    fArrayPending: Integer;
+    fPendingLine: Integer;
     fEncodingCorrection: TSymbolCorrectionEncoding;
     //fSingleQuoteCompleteState: TSymbolCompleteState;
     //fDoubleQuoteCompleteState: TSymbolCompleteState;
@@ -1228,19 +1233,30 @@ var
   Token: String;
   HighlightPos: TBufferCoord;
 
+  // The closer ahead of the caret, if one we inserted is still pending on this line
+  function NextIsPending(Closer: Char; Pending: Integer): Boolean;
+  begin
+    Result := (Pending > 0) and (fText.CaretX <= Length(fText.LineText))
+      and (fText.LineText[fText.CaretX] = Closer);
+  end;
+
   procedure HandleParentheseCompletion;
   begin
     InsertString(')', false);
     if FunctionTipAllowed then
       fFunctionTip.Activated := true;
     fParenthCompleteState := scsInserted;
+    Inc(fParenthPending);
   end;
 
   procedure HandleParentheseSkip;
   begin
-    if fParenthCompleteState = scsFinished then begin
+    // Step over an auto-inserted ), also after typing inside the parentheses. Before, only a )
+    // typed straight after the ( stepped over; "(1" then ")" left "(1))"
+    if NextIsPending(')', fParenthPending) then begin
       fText.CaretXY := BufferCoord(fText.CaretX + 1, fText.CaretY); // skip over
       fParenthCompleteState := scsSkipped;
+      Dec(fParenthPending);
       Key := #0; // remove key press
     end;
   end;
@@ -1249,13 +1265,15 @@ var
   begin
     InsertString(']', false);
     fArrayCompleteState := scsInserted;
+    Inc(fArrayPending);
   end;
 
   procedure HandleArraySkip;
   begin
-    if fArrayCompleteState = scsFinished then begin
+    if NextIsPending(']', fArrayPending) then begin // as HandleParentheseSkip
       fText.CaretXY := BufferCoord(fText.CaretX + 1, fText.CaretY); // skip over
       fArrayCompleteState := scsSkipped;
+      Dec(fArrayPending);
       Key := #0; // remove key press
     end;
   end;
@@ -1385,6 +1403,13 @@ begin
       'Character') then
       Exit;
 
+  // Pending closers belong to one line: on another line, a ) or ] typed is never stepped over
+  if fPendingLine <> fText.CaretY then begin
+    fParenthPending := 0;
+    fArrayPending := 0;
+    fPendingLine := fText.CaretY;
+  end;
+
   case Key of
     '(': begin
         if devEditor.ParentheseComplete then
@@ -1487,6 +1512,11 @@ var
         (devEditor.SingleQuoteComplete and (DeletedChar = '''') and (NextChar = '''')) or
         (devEditor.DoubleQuoteComplete and (DeletedChar = '"') and (NextChar = '"')) then begin
         fText.LineText := Copy(S, 1, fText.CaretX - 1) + Copy(S, fText.CaretX + 1, MaxInt);
+        // the pair is gone, its closer with it
+        if (DeletedChar = '(') and (fParenthPending > 0) then
+          Dec(fParenthPending);
+        if (DeletedChar = '[') and (fArrayPending > 0) then
+          Dec(fArrayPending);
       end;
     end;
   end;

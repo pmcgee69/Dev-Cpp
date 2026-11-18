@@ -40,6 +40,10 @@ layout as a pure `LayoutFor`), into `delfcpp-tests`. The fourth unit was `VCL\Cl
 IntList's neighbours). Then onward through the class browser (`CppPreprocessor`: its `#if`
 operands are read with 32-bit `StrToIntDef`; `CppParser`).
 
+**Bookmark (18 Nov, before a WASM tangent):** tests done for every unit so far (62, delfcpp-tests).
+Open choice put to the user: a permanent test switch (devcpp.exe runs upstream's in-app Tests.pas
+and exits, results to a file; also covers error 3), or back to the next unit.
+
 ## The principles (the user's; see the journey for their words)
 
 1. **One unit at a time, stacked**: each rewritten, checked and in use before the next.

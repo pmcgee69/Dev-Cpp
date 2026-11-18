@@ -19,6 +19,8 @@
 
 unit Tests;
 
+{$ASSERTIONS ON} // the tests are their asserts, in a Release build too
+
 interface
 
 uses
@@ -28,9 +30,13 @@ uses
 type
   TTestClass = class
   private
+    fLastError: String;
     procedure ShowUpdate(Delay: Integer);
+    function Failed(E: Exception): Boolean;
   public
     constructor Create;
+    // why the last test returned False: the exception, often "Assertion failed (…Tests.pas, line N)"
+    property LastError: String read fLastError;
     function TestEditor: Boolean;
     function TestEditorList: Boolean;
     function TestActions: Boolean;
@@ -38,15 +44,99 @@ type
     function TestAll: Boolean;
   end;
 
+// The test switch: devcpp.exe -runtests <file> [-tests <names>] runs the named tests (default
+// editor,editorlist) once the main window is up, writes one line per test to <file> and a
+// summary, then closes Dev-C++ with exit code 0 (all passed) or 1. Names: editor, editorlist,
+// actions (runs every enabled action, so dialogs open), compileroptions (deletes and re-finds
+// the compiler sets, and saves them). Use -c <folder> to keep the run off your own settings.
+function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
+procedure RunTestSwitch(const ResultFile, Selection: String);
+
 implementation
 
 uses
-  Main, EditorList, Editor, Version;
+  Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils;
+
+function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
+begin
+  Result := FindCmdLineSwitch('runtests', ResultFile, True, [clstValueNextParam]);
+  if not FindCmdLineSwitch('tests', Selection, True, [clstValueNextParam]) then
+    Selection := 'editor,editorlist';
+end;
+
+procedure RunTestSwitch(const ResultFile, Selection: String);
+var
+  Lines: TStringList;
+  Name: String;
+  Passed, Failures: Integer;
+  Watch: TStopwatch;
+  Ok: Boolean;
+  Test: TTestClass;
+begin
+  Lines := TStringList.Create;
+  Test := TTestClass.Create;
+  Passed := 0;
+  Failures := 0;
+  try
+    Lines.Add(Format('Dev-C++ %s, %d-bit, %s', [DEVCPP_VERSION, SizeOf(Pointer) * 8,
+      FormatDateTime('yyyy-mm-dd hh:nn:ss', Now)]));
+    for Name in SplitString(LowerCase(Selection), ',') do begin
+      if not MatchStr(Name, ['editor', 'editorlist', 'actions', 'compileroptions']) then begin
+        Lines.Add('UNKNOWN ' + Name);
+        Inc(Failures);
+        Continue;
+      end;
+      Watch := TStopwatch.StartNew;
+      try
+        if Name = 'editor' then Ok := Test.TestEditor
+        else if Name = 'editorlist' then Ok := Test.TestEditorList
+        else if Name = 'actions' then Ok := Test.TestActions
+        else Ok := Test.TestCompilerOptions;
+      except
+        on E: Exception do
+          Ok := Test.Failed(E); // a test's own handler should have caught it; record it anyway
+      end;
+      if Ok then begin
+        Lines.Add(Format('PASS %s (%.2f s)', [Name, Watch.Elapsed.TotalSeconds]));
+        Inc(Passed);
+      end else begin
+        Lines.Add(Format('FAIL %s (%.2f s): %s', [Name, Watch.Elapsed.TotalSeconds, Test.LastError]));
+        Inc(Failures);
+      end;
+      // A failed test leaves its editors open, modified: closing them would ask to save (and
+      // the unattended run would wait on the dialog). Discard them; the next test starts clean.
+      if MainForm.EditorList.PageCount > 0 then begin
+        Lines.Add(Format('NOTE %s left %d editors open; closed unsaved', [Name, MainForm.EditorList.PageCount]));
+        for var I := 0 to MainForm.EditorList.PageCount - 1 do
+          MainForm.EditorList[I].Text.Modified := False;
+        MainForm.EditorList.CloseAll;
+      end;
+    end;
+    Lines.Add(Format('%d passed, %d failed', [Passed, Failures]));
+    Lines.WriteBOM := False;
+    Lines.SaveToFile(ResultFile, TEncoding.UTF8);
+  finally
+    Test.Free;
+    Lines.Free;
+  end;
+  if Failures > 0 then
+    ExitCode := 1
+  else
+    ExitCode := 0;
+  MainForm.Close;
+end;
 
 procedure TTestClass.ShowUpdate(Delay: Integer);
 begin
   Application.ProcessMessages;
   Sleep(Delay);
+end;
+
+function TTestClass.Failed(E: Exception): Boolean;
+begin
+  // the step is the status bar message each test sets as it goes
+  fLastError := E.ClassName + ': ' + E.Message + ', at step "' + MainForm.Statusbar.Panels[2].Text + '"';
+  Result := False;
 end;
 
 function TTestClass.TestEditorList: Boolean;
@@ -254,7 +344,8 @@ begin
 
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
     //raise Exception.Create('TTestClass.TestEditorList');
   end;
 end;
@@ -273,7 +364,8 @@ begin
     end;
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 
@@ -320,7 +412,8 @@ begin
     end;
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 
@@ -547,7 +640,8 @@ begin
 
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 

@@ -864,7 +864,7 @@ The `.dproj` change is exactly the one line. Last, a short `Source/DELF.md` for 
 
 **Claude** <sub>2026-11-17 19:47 UTC</sub>
 
-The first Dev-C++ unit written in Delf is in place and in use: `IntList`, which the class browser and code completion depend on. It's committed as `2797fce` on a new local branch, `delf-units`, built on `win64`. Nothing is pushed.
+The first Dev-C++ unit written in Delf is in place and in use: `IntList`, which the class browser and code completion depend on. It's committed as `2797fce` on a new local branch, `delfcpp-units`, built on `win64`. Nothing is pushed.
 
 **How it's wired in:**
 - `IntList.pas` became `IntList.delf`, and delfc writes the `IntList.pas` that Delphi compiles. Both are committed, so Dev-C++ still builds without Delf.
@@ -927,7 +927,7 @@ dev64's plain-Delphi IntList now behaves exactly like the Delf one: identical on
 
 **Claude** <sub>2026-11-17 19:52 UTC</sub>
 
-Now the journey log on `delf-units`. It goes at the root of the fork, with a bug table that names what found each bug:
+Now the journey log on `delfcpp-units`. It goes at the root of the fork, with a bug table that names what found each bug:
 
 ---
 
@@ -1009,7 +1009,7 @@ This is a different doc to bigtodo .. there will be a lot of ideas to follow up 
 
 I've recorded it in both places:
 
-- **As an event:** a new entry in the log section of `DELF-JOURNEY.md` on the `delf-units` branch (commit `4d417af`, local). It covers the scoped-enum problem, your question, the constant-alias answer tested with dcc32, and the plan.
+- **As an event:** a new entry in the log section of `DELF-JOURNEY.md` on the `delfcpp-units` branch (commit `4d417af`, local). It covers the scoped-enum problem, your question, the constant-alias answer tested with dcc32, and the plan.
 - **As `devcpp-delf-todo`:** a new file, `Delf/docs/devcpp-delf-todo.md`, separate from BIG_TODO. It's committed and pushed (`4cc4f64`). It starts with five entries:
   1. **Enum constant aliases** (tested): written by hand in `EditorList.delf` for now, and proposed for delfc to generate under `{ delf: migrate }`.
   2. **Rules that could have caught IntList's bugs:** Delf flagged none of the four. The candidates are:
@@ -1074,7 +1074,7 @@ Both pass, with identical results. Removing the temporary test patches:
 
 **Claude** <sub>2026-11-17 20:09 UTC</sub>
 
-Both checkouts are clean again. Committing EditorList on `delf-units`, then the plain-Delphi fix on `dev64`:
+Both checkouts are clean again. Committing EditorList on `delfcpp-units`, then the plain-Delphi fix on `dev64`:
 
 ---
 
@@ -1094,7 +1094,7 @@ Now the todo in Delf:
 
 EditorList, the second unit, is done and in use. Instances is next; tell me if you want something else first.
 
-- **`delf-units` (`b3437a0`):** `EditorList.delf`, with the enum constant aliases written by hand. `Tests.pas` compiled unchanged with its 20 unqualified `lstLeft`-style uses. Both platforms build.
+- **`delfcpp-units` (`b3437a0`):** `EditorList.delf`, with the enum constant aliases written by hand. `Tests.pas` compiled unchanged with its 20 unqualified `lstLeft`-style uses. Both platforms build.
 - **Bug found and fixed:** in split view, `GetVisibleEditors` returned the left editor as the right one too, so after changing editor options the right pane was never repainted. The plain-Delphi fix is on `dev64` (`6ea85d8`).
 - **Flagged, not changed:** `CloseEditor` can report success without closing anything, which would make `CloseAll` loop forever.
 - **How I tested it:**
@@ -1104,7 +1104,7 @@ EditorList, the second unit, is done and in use. Instances is next; tell me if y
 - **delfc bug:** it drops comments inside `match` arms. Recorded in `devcpp-delf-todo` along with ideas from this unit (a permanent test hook, typed replacements for the `-1` sentinels).
 - **The log:** `DELF-JOURNEY.md` now has the sections you asked for: files attacked, fixes, errors found (with what found each), lessons and takeaways. It also tracks size: 2 of 106 units in Delf so far, about 1.9% of Dev-C++'s own code. Errors found so far: Claude 11 (one suspected), the Win64 compiler 2, tests 1, Delf's rules 0.
 
-Nothing is pushed: `delf-units` and `dev64` are both local.
+Nothing is pushed: `delfcpp-units` and `dev64` are both local.
 
 ---
 
@@ -1187,7 +1187,7 @@ The takeaway says to grep for that `SizeOf` class across Dev-C++, so before pick
 Instances, the third unit, is done, and the first one done the two-pass way.
 
 - **Pass 1 (`dee5f73`):** renamed to `.delf` with `{ delf: migrate }`. delfc's output is the original byte for byte, apart from the marker comment.
-- **Four bugs fixed, same text on both branches (`76f8a86` on `delf-units`, `1197288` on `dev64`):**
+- **Four bugs fixed, same text on both branches (`76f8a86` on `delfcpp-units`, `1197288` on `dev64`):**
   - **Live:** main's `WM_COPYDATA` handler, which any process can send to, read the text up to a terminator and ignored the stated length. It now uses the length. I tested this on the 64-bit Delf build: a file sent with and without a terminator opened both times. I couldn't rerun the original, so the old misbehaviour isn't demonstrated.
   - **Dormant, in the single-instance code that's commented out:**
     - three Windows calls given a buffer size in bytes where they count characters (1,024 for 512)

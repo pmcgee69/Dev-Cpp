@@ -1,4 +1,4 @@
-"""Instances: four bugs fixed, the same text for Instances.delf (delf-units) and Instances.pas (dev64).
+"""Instances: four bugs fixed, the same text for Instances.delf (delfcpp-units) and Instances.pas (dev64).
 Keeps bytes (latin-1) and line endings.  usage: instances_fix.py <file>"""
 import sys
 p = sys.argv[1]

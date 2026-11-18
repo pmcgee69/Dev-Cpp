@@ -5,8 +5,8 @@ rem              out\original-src-win32|64. Win32: upstream as it is (ORIGINAL_R
 rem              master). Win64: upstream doesn't compile for Win64, so upstream plus only the
 rem              Win64 port's changes (ORIGINAL_REF64, default dcef9cf).
 rem   dev64    : the dev64 checkout's plain Delphi
-rem   delf     : the delf-units checkout's units (delfc's .pas output of each .delf)
-rem The two checkouts sit side by side: ..\..\Dev-Cpp-delf (delf-units) and ..\..\Dev-Cpp-dev64.
+rem   delf     : the delfcpp-units checkout's units (delfc's .pas output of each .delf)
+rem The two checkouts sit side by side: ..\..\Dev-Cpp-delf (delfcpp-units) and ..\..\Dev-Cpp-dev64.
 rem Usage: run-tests.cmd [original|dev64|delf|all]   (default all). Exit 1 if a run failed;
 rem the original is expected to fail its Regression tests.
 setlocal enabledelayedexpansion

@@ -1,4 +1,4 @@
-"""dev64: IntList's bugs fixed in plain Delphi, as found by its Delf rewrite (delf-units 2797fce).
+"""dev64: IntList's bugs fixed in plain Delphi, as found by its Delf rewrite (delfcpp-units 2797fce).
 Keeps the file's bytes (latin-1) and line endings.  usage: dev64_intlist.py <IntList.pas>"""
 import re, sys
 

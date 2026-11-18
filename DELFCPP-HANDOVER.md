@@ -13,7 +13,7 @@ words included); Delf's `docs/devcpp-delf-todo.md` (ideas to follow up).
 | What | Where |
 |---|---|
 | Upstream Win32, `master` (the main checkout; Delf's corpus survey reads it) | `C:\Users\User\Documents\GitHub2\Dev-Cpp` |
-| Branch `delf-units` (git worktree) | `C:\Users\User\Documents\GitHub2\Dev-Cpp-delf` |
+| Branch `delfcpp-units` (git worktree) | `C:\Users\User\Documents\GitHub2\Dev-Cpp-delf` |
 | Branch `dev64` (git worktree of the same repo) | `C:\Users\User\Documents\GitHub2\Dev-Cpp-dev64` |
 | Delf (private repo; delfc, SPEC, docs) | `D:\Users\Perseus\Documents\Embarcadero\Studio\Projects\_CLAUDE\Delf` |
 | delfc | `Delf\poc`, run as `python -m delfc file.delf -U <unit dirs> --ns <scopes> --check` |
@@ -29,7 +29,7 @@ words included); Delf's `docs/devcpp-delf-todo.md` (ideas to follow up).
 | `master` | = upstream | |
 | `hidpi-toolbar-icons` | `d3914d1` (**pushed**) | HiDPI toolbar, labels, zoom, positions kept |
 | `dev64` | `7c9a568` | Win64 port (`dcef9cf`), then plain-Delphi fixes inspired by the Delf units |
-| `delf-units` | latest | Units in Delf, built through delfc, plus the log and this handover |
+| `delfcpp-units` | latest | Units in Delf, built through delfc, plus the log and this handover |
 
 Units in Delf: **IntList** (`2797fce`), **EditorList** (`b3437a0`), **Instances** (`dee5f73` pass 1,
 `76f8a86` fixes). Plain fixes on `dev64`: `ca0effe`, `6ea85d8`, `1197288`, `7c9a568`; on both:
@@ -50,7 +50,7 @@ and exits, results to a file; also covers error 3), or back to the next unit.
 1. **One unit at a time, stacked**: each rewritten, checked and in use before the next.
 2. **Two passes per unit**: pass 1 = rename to `.delf` + `{ delf: migrate }` + the fewest changes
    that build and behave the same (the "door": delfc's output should equal the original);
-   bugs found are fixed as their own commit, the same text on `delf-units` and `dev64`. Pass 2,
+   bugs found are fixed as their own commit, the same text on `delfcpp-units` and `dev64`. Pass 2,
    later: idiomatic Delf. "We can always adjust as we go."
 3. **Own branches**: this can't go upstream.
 4. **Log the whole journey** in `DELF-JOURNEY.md`: each file, each error and **what found it**
@@ -79,7 +79,7 @@ and exits, results to a file; also covers error 3), or back to the next unit.
    `clickwin.ps1`, `cropwin.ps1`, `classtree.ps1`).
 5. Build Win32 and Win64 on both branches; run.
 6. Update `DELF-JOURNEY.md` (rows in files/errors/fixes, lessons, takeaways, size via
-   `size.py <repo> delf-units`, a Log entry) and `devcpp-delf-todo.md` (commit + push Delf).
+   `size.py <repo> delfcpp-units`, a Log entry) and `devcpp-delf-todo.md` (commit + push Delf).
 7. Grep the codebase for the class of each bug found (Instances' `SizeOf`-as-character-count
    found `Utils.SetPath`).
 

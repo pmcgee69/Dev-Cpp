@@ -20,7 +20,7 @@ the Delphi compiler, or a test), so the log can say honestly what Delf itself co
 - **Tests first, one test for both versions** (the user, 18 Nov: *"Creating and applying tests ..
   v important"*; *"a single test for both the Delf code and the Delphi version. This is a great
   argument for functions that don't mess with state too much."*). `delfcpp-tests\` (DUnitX), the
-  same source on both branches, is built against the original units, `dev64` and `delf-units`,
+  same source on both branches, is built against the original units, `dev64` and `delfcpp-units`,
   Win32 and Win64 (`run-tests.cmd`). The original fails the Regression tests: the bugs pinned.
 - *"The door holds for the file" was wishful thinking.* A `.delf` unit's enumerations are
   scoped in its output, which reaches into the plain units that use it. Maybe Delf's
@@ -32,7 +32,7 @@ the Delphi compiler, or a test), so the log can say honestly what Delf itself co
 |---|---|---|
 | `hidpi-toolbar-icons` | `master` | HiDPI toolbar, labels, zoom (pushed) |
 | `dev64` | `hidpi-toolbar-icons` | Win64 build (`dcef9cf`), then plain-Delphi fixes inspired by the Delf units |
-| `delf-units` | `dev64` at `dcef9cf` | Units rewritten in Delf, built through delfc (this log) |
+| `delfcpp-units` | `dev64` at `dcef9cf` | Units rewritten in Delf, built through delfc (this log) |
 
 ## Size
 
@@ -43,16 +43,16 @@ vcl-styles-utils, DDetours, Abbrevia) and the separate tools (Packman, PackMaker
 | When | Own `.pas` | Own `.delf` | Own `.dfm` | Own `.dpr`+`.inc` | Tools (all kinds) | Bundled (all kinds) |
 |---|---|---|---|---|---|---|
 | `master` (start) | 106 files, 56,752 lines | 0 | 68 files, 45,689 lines | 23 files, 1,530 lines | 43 files, 36,839 lines | 392 files, 258,655 lines |
-| `delf-units` after IntList | 106 files, 57,189 lines¹ | 1 file, 418 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
-| `delf-units` after EditorList | 106 files, 57,201 lines¹ | 2 files, 1,068 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
-| `delf-units` after Instances | 106 files, 57,210 lines¹ | 3 files, 1,235 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
+| `delfcpp-units` after IntList | 106 files, 57,189 lines¹ | 1 file, 418 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
+| `delfcpp-units` after EditorList | 106 files, 57,201 lines¹ | 2 files, 1,068 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
+| `delfcpp-units` after Instances | 106 files, 57,210 lines¹ | 3 files, 1,235 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
 
 ¹ Includes the generated `.pas` of each Delf unit. Units in Delf so far: **3 of 106** (1,264
 of ~56,750 original lines, 2.2%).
 
 ## Files attacked
 
-| # | Unit | Lines (before → `.delf`) | `delf-units` | `dev64` | Checked by |
+| # | Unit | Lines (before → `.delf`) | `delfcpp-units` | `dev64` | Checked by |
 |---|---|---|---|---|---|
 | 1 | `VCL\ClassBrowsing\IntList` | 445 → 418 | `2797fce` | `ca0effe` | Differential test, 1.2M operations, Win32 + Win64; class browser in the 64-bit build |
 | 2 | `EditorList` | 661 → 650 | `b3437a0` | `6ea85d8` | Dev-C++'s own `TestEditorList` (switched off upstream), run in both 64-bit builds: same result in each (see below) |

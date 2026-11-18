@@ -12,7 +12,7 @@ recorded from upstream `master` built by dcc32 for Windows.
 |---|---|---|
 | original (upstream `master`) | **doesn't compile**: `IntList.Error`'s x86 assembler (`MOV EAX,[EBP+4]`) | — |
 | `dev64` (plain Delphi, DelfCpp's fixes) | 3.35 MB | **18 of 18 identical** |
-| Delf (`delf-units`, delfc's output) | 3.35 MB | **18 of 18 identical** |
+| Delf (`delfcpp-units`, delfc's output) | 3.35 MB | **18 of 18 identical** |
 
 The code is 2004-era Delphi: no inline variables, no anonymous methods, which is the dialect
 Free Pascal's Delphi mode handles. What it took, all in the build's copy of the source

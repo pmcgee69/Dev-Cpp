@@ -15,7 +15,9 @@ uses
   DUnitX.TestFramework,
   Test.CppTokenizer in 'Test.CppTokenizer.pas',
   Test.CppParser in 'Test.CppParser.pas',
-  Test.IntList in 'Test.IntList.pas';
+  Test.IntList in 'Test.IntList.pas',
+  Test.Instances in 'Test.Instances.pas',
+  Test.Utils in 'Test.Utils.pas';
 
 var
   Runner: ITestRunner;

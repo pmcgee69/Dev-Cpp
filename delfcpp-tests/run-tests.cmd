@@ -23,7 +23,7 @@ set WHICH=%1
 if "%WHICH%"=="" set WHICH=all
 
 rem The units under test, as paths under Source (the original's are taken from git)
-set UNITS=VCL/ClassBrowsing/CppTokenizer.pas VCL/ClassBrowsing/IntList.pas
+set UNITS=VCL/ClassBrowsing/CppTokenizer.pas VCL/ClassBrowsing/IntList.pas Instances.pas Utils.pas
 
 rem Every other unit comes from the version's own Source, as devcpp.dproj finds them
 set "SUB=VCL\ClassBrowsing;VCL\SVGIconImageList\Svg;VCL\SVGIconImageList\Source;VCL\devFileMonitor;VCL\devShortcuts;VCL\CompOptionsList;VCL\SynEdit\Source;VCL\vcl-styles-utils\Common;VCL\DDetours\Source"
@@ -59,14 +59,25 @@ for %%P in (32 64) do (
   set "BIN=%OUT%\%V%-win%%P"
   if not exist "!BIN!" mkdir "!BIN!"
   if %%P==32 (set "LIB=%BDS%\lib\win32\release") else (set "LIB=%BDS%\lib\win64\release")
-  "%BDS%\bin\dcc%%P.exe" -Q -B -NSSystem;Winapi;Vcl;Vcl.Imaging;System.Win "-U!UPATH!;!LIB!" "-E!BIN!" "-NU!BIN!" "%HERE%\DelfCppTests.dpr" > "!BIN!\build.log" 2>&1
+  "%BDS%\bin\dcc%%P.exe" -Q -B -NSVcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win "-U!UPATH!;!LIB!" "-E!BIN!" "-NU!BIN!" "%HERE%\DelfCppTests.dpr" > "!BIN!\build.log" 2>&1
   if errorlevel 1 (
     echo === %V% Win%%P: BUILD FAILED, see !BIN!\build.log
     set "FAILED=1"
   ) else (
-    "!BIN!\DelfCppTests.exe" --exitbehavior:Continue > "!BIN!\results.txt" 2>&1
+    set "EXCL="
+    if "%V%"=="original" set "EXCL=--exclude:CrashesOriginal"
+    "!BIN!\DelfCppTests.exe" --exitbehavior:Continue !EXCL! > "!BIN!\results.txt" 2>&1
     rem the exit code first: in a .cmd file, set resets the error level
     set "RC=!errorlevel!"
+    if "%V%"=="original" (
+      rem the tests that kill the original, run on their own: a crash here is the bug they pin
+      "!BIN!\DelfCppTests.exe" --exitbehavior:Continue --include:CrashesOriginal > "!BIN!\results-crashes.txt" 2>&1
+      if "!errorlevel!"=="-1073741819" (
+        echo === %V% Win%%P: the CrashesOriginal tests crash the original, as expected: access violation
+      ) else (
+        echo === %V% Win%%P: the CrashesOriginal tests did not crash the original, exit code !errorlevel!
+      )
+    )
     set "R=passed"
     if not "!RC!"=="0" (
       if "%V%"=="original" (
@@ -77,6 +88,8 @@ for %%P in (32 64) do (
       )
     )
     for /f "tokens=*" %%L in ('findstr /r /c:"Tests Found" /c:"Tests Passed" /c:"Tests Failed" /c:"Tests Errored" "!BIN!\results.txt"') do set "LAST=!LAST! %%L"
+    rem no summary: the test program itself died (a stack overrun, say); the tests after it didn't run
+    if not defined LAST set "LAST=CRASHED: the test program died, exit code !RC!; see !BIN!\results.txt"
     echo === %V% Win%%P: !R!  !LAST!
     set LAST=
   )

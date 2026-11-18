@@ -2,7 +2,7 @@ program DelfCppTests;
 
 { DelfCpp's tests: one source for every version of a unit. run-tests.cmd builds this program
   three times, with the unit path pointing at the original (pre-fix) units, at dev64's plain
-  Delphi, and at delf-units' delfc output, for Win32 and Win64. A test sees only the unit's
+  Delphi, and at delfcpp-units' delfc output, for Win32 and Win64. A test sees only the unit's
   interface, so the same assertions judge all three. Regression tests (category "Regression")
   are expected to fail on the original: that is the bug they pin. }
 

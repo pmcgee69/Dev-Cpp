@@ -5,7 +5,7 @@
 #   .\run-app-tests.ps1 -Exe <devcpp.exe>[,<devcpp.exe>...] [-Tests editor,editorlist]
 param(
   [Parameter(Mandatory)] [string[]]$Exe,
-  [string]$Tests = 'editor,editorlist',
+  [string]$Tests = 'editor,editorlist,undo',
   [string]$Install = 'C:\Dev-Cpp',
   [string]$Config = "$env:APPDATA\Embarcadero\Dev-Cpp\devcpp64-test.ini",
   [int]$TimeoutSeconds = 300

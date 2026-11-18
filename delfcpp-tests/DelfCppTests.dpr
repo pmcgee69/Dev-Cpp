@@ -17,7 +17,8 @@ uses
   Test.CppParser in 'Test.CppParser.pas',
   Test.IntList in 'Test.IntList.pas',
   Test.Instances in 'Test.Instances.pas',
-  Test.Utils in 'Test.Utils.pas';
+  Test.Utils in 'Test.Utils.pas',
+  Test.EditorList in 'Test.EditorList.pas';
 
 var
   Runner: ITestRunner;

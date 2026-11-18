@@ -418,7 +418,7 @@ begin
     clear;
     Stream.readbuffer(size, sizeof(size));
     for i := 0 to size - 1 do begin
-      Stream.Read(N, sizeof(N));
+      Stream.ReadBuffer(N, sizeof(N)); // was Read: a short stream left the rest as junk
       add(N);
     end;
   finally

@@ -1,42 +1,42 @@
-﻿preprocessor|_STL_QUEUE_H|||stl/stl_queue.h:57|parent 
-class|queue|class||stl/stl_queue.h:93|parent 
-typedef|_Sequence_value_type|typename _Sequence::value_type||stl/stl_queue.h:96|parent queue
-function|operator==|bool|(const queue<_Tp1, _Seq1>&, const queue<_Tp1, _Seq1>&)|stl/stl_queue.h:104|parent queue
-function|operator<|bool|(const queue<_Tp1, _Seq1>&, const queue<_Tp1, _Seq1>&)|stl/stl_queue.h:108|parent queue
-typedef|value_type|typename _Sequence::value_type||stl/stl_queue.h:111|parent queue
-typedef|reference|typename _Sequence::reference||stl/stl_queue.h:112|parent queue
-typedef|const_reference|typename _Sequence::const_reference||stl/stl_queue.h:113|parent queue
-typedef|size_type|typename _Sequence::size_type||stl/stl_queue.h:114|parent queue
-typedef|container_type|_Sequence||stl/stl_queue.h:115|parent queue
-variable|c|_Sequence||stl/stl_queue.h:126|parent queue
-constructor|queue|queue|(const _Sequence& __c = _Sequence())|stl/stl_queue.h:135|parent queue
-function|empty|bool|()|stl/stl_queue.h:150|parent queue
-function|size|size_type|()|stl/stl_queue.h:155|parent queue
-function|front|reference|()|stl/stl_queue.h:163|parent queue
-function|front|const_reference|()|stl/stl_queue.h:174|parent queue
-function|back|reference|()|stl/stl_queue.h:185|parent queue
-function|back|const_reference|()|stl/stl_queue.h:196|parent queue
-function|push|void|(const value_type& __x)|stl/stl_queue.h:212|parent queue
-function|pop|void|()|stl/stl_queue.h:238|parent queue
-function|operator==|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:268|parent 
-function|operator<|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:286|parent 
-function|operator!=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:292|parent 
-function|operator>|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:298|parent 
-function|operator<=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:304|parent 
-function|operator>=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl/stl_queue.h:310|parent 
-class|priority_queue|class||stl/stl_queue.h:367|parent 
-typedef|_Sequence_value_type|typename _Sequence::value_type||stl/stl_queue.h:370|parent priority_queue
-typedef|value_type|typename _Sequence::value_type||stl/stl_queue.h:379|parent priority_queue
-typedef|reference|typename _Sequence::reference||stl/stl_queue.h:380|parent priority_queue
-typedef|const_reference|typename _Sequence::const_reference||stl/stl_queue.h:381|parent priority_queue
-typedef|size_type|typename _Sequence::size_type||stl/stl_queue.h:382|parent priority_queue
-typedef|container_type|_Sequence||stl/stl_queue.h:383|parent priority_queue
-variable|c|_Sequence||stl/stl_queue.h:387|parent priority_queue
-variable|comp|_Compare||stl/stl_queue.h:388|parent priority_queue
-constructor|priority_queue|priority_queue|(const _Compare& __x = _Compare(), const _Sequence& __s = _Sequence())|stl/stl_queue.h:398|parent priority_queue
-constructor|priority_queue|priority_queue|(_InputIterator __first, _InputIterator __last, const _Compare& __x = _Compare(), const _Sequence& __s = _Sequence())|stl/stl_queue.h:434|parent priority_queue
-function|empty|bool|()|stl/stl_queue.h:468|parent priority_queue
-function|size|size_type|()|stl/stl_queue.h:473|parent priority_queue
-function|top|const_reference|()|stl/stl_queue.h:481|parent priority_queue
-function|push|void|(const value_type& __x)|stl/stl_queue.h:496|parent priority_queue
-function|pop|void|()|stl/stl_queue.h:531|parent priority_queue
+﻿preprocessor|_STL_QUEUE_H|||stl_queue.h:57|parent 
+class|queue|class||stl_queue.h:93|parent 
+typedef|_Sequence_value_type|typename _Sequence::value_type||stl_queue.h:96|parent queue
+function|operator==|bool|(const queue<_Tp1, _Seq1>&, const queue<_Tp1, _Seq1>&)|stl_queue.h:104|parent queue
+function|operator<|bool|(const queue<_Tp1, _Seq1>&, const queue<_Tp1, _Seq1>&)|stl_queue.h:108|parent queue
+typedef|value_type|typename _Sequence::value_type||stl_queue.h:111|parent queue
+typedef|reference|typename _Sequence::reference||stl_queue.h:112|parent queue
+typedef|const_reference|typename _Sequence::const_reference||stl_queue.h:113|parent queue
+typedef|size_type|typename _Sequence::size_type||stl_queue.h:114|parent queue
+typedef|container_type|_Sequence||stl_queue.h:115|parent queue
+variable|c|_Sequence||stl_queue.h:126|parent queue
+constructor|queue|queue|(const _Sequence& __c = _Sequence())|stl_queue.h:135|parent queue
+function|empty|bool|()|stl_queue.h:150|parent queue
+function|size|size_type|()|stl_queue.h:155|parent queue
+function|front|reference|()|stl_queue.h:163|parent queue
+function|front|const_reference|()|stl_queue.h:174|parent queue
+function|back|reference|()|stl_queue.h:185|parent queue
+function|back|const_reference|()|stl_queue.h:196|parent queue
+function|push|void|(const value_type& __x)|stl_queue.h:212|parent queue
+function|pop|void|()|stl_queue.h:238|parent queue
+function|operator==|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:268|parent 
+function|operator<|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:286|parent 
+function|operator!=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:292|parent 
+function|operator>|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:298|parent 
+function|operator<=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:304|parent 
+function|operator>=|bool|(const queue<_Tp, _Seq>& __x, const queue<_Tp, _Seq>& __y)|stl_queue.h:310|parent 
+class|priority_queue|class||stl_queue.h:367|parent 
+typedef|_Sequence_value_type|typename _Sequence::value_type||stl_queue.h:370|parent priority_queue
+typedef|value_type|typename _Sequence::value_type||stl_queue.h:379|parent priority_queue
+typedef|reference|typename _Sequence::reference||stl_queue.h:380|parent priority_queue
+typedef|const_reference|typename _Sequence::const_reference||stl_queue.h:381|parent priority_queue
+typedef|size_type|typename _Sequence::size_type||stl_queue.h:382|parent priority_queue
+typedef|container_type|_Sequence||stl_queue.h:383|parent priority_queue
+variable|c|_Sequence||stl_queue.h:387|parent priority_queue
+variable|comp|_Compare||stl_queue.h:388|parent priority_queue
+constructor|priority_queue|priority_queue|(const _Compare& __x = _Compare(), const _Sequence& __s = _Sequence())|stl_queue.h:398|parent priority_queue
+constructor|priority_queue|priority_queue|(_InputIterator __first, _InputIterator __last, const _Compare& __x = _Compare(), const _Sequence& __s = _Sequence())|stl_queue.h:434|parent priority_queue
+function|empty|bool|()|stl_queue.h:468|parent priority_queue
+function|size|size_type|()|stl_queue.h:473|parent priority_queue
+function|top|const_reference|()|stl_queue.h:481|parent priority_queue
+function|push|void|(const value_type& __x)|stl_queue.h:496|parent priority_queue
+function|pop|void|()|stl_queue.h:531|parent priority_queue

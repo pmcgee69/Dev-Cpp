@@ -68,7 +68,8 @@ upstream's own Win32 builds too; for CppTokenizer the tests show it, run against
 itself (Win32: 5 regression tests fail).
 
 **Found by**: *Claude* (reading the code, while porting or rewriting), *Delf* (a Delf rule or
-delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test showed it).
+delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test showed it), *Rust*
+(rustc refusing the code as written, in the hand port, `delfcpp-rust`).
 
 | # | Where | The bug | Effect | Found by | Fixed in |
 |---|---|---|---|---|---|
@@ -96,12 +97,20 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 22 | the same routines | After an escape the loop skips a character | Live, **in well-formed code**: `"\\\\"` and `"\n\\"` lose their closing quote and swallow the code after | Claude, tracing #21 | `289ae81`, `16f2ad6` |
 | 23 | `CppTokenizer.GetWord` | `a[` at the end steps past the `#0` | Live: reads past the text; on Win64 a token picked up another string from the heap | Claude, while rewriting; the tests show it | `289ae81`, `16f2ad6` |
 | 24 | `CppTokenizer.OpenFile`, `OpenStream` | Bytes allocated, terminator written at a character offset; ANSI bytes read as UTF-16; buffer never freed | Heap overrun and leak (dormant: unused) | Claude, while rewriting | logged only |
+| 25 | `CppTokenizer.GetForInit` | A `String` function that never assigns `Result` | Dormant: the caller happens to get `''`, which is what it needs | **Rust**: the port can't compile it as written | logged; kept in the port as `Ok(Vec::new())` |
+| 26 | `CppTokenizer.SimplifyArgs` | Reads `Output[Length + 1]`, one past the end (the "remove before" test when `Head = Index = Length`) | Harmless: Delphi reads the string's `#0`, which counts as blank. Range checks on would raise | Claude, porting to Rust (Rust's indexing panics there) | logged; the port reads it as 0 explicitly |
+| 27 | `CppTokenizer.SimplifyArgs` | "Remove all before" starts at the comma itself, which isn't blank, so it never removes anything | Live, cosmetic: argument lists keep a space before `,` and `)` (`(int a , int b )`; the comment's aim is `(int a, int b)`); seen in GCC's headers | Claude, porting to Rust; the corpus shows it | logged |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
 arm is now written (*Delf*; `dev64` states it too).
 
-**Tally so far:** Claude 21 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
+**Observed, not counted:** in a raw header, an `#include` line with a `:` in a trailing comment
+(`// … std::allocator.`) makes `StrToInt` raise, and the file's remaining tokens are lost (21 of
+GCC's 3,137 files). The class browser tokenizes the preprocessor's output, not raw headers, so
+whether it bites there is unchecked.
+
+**Tally so far:** Claude 23 (one suspected), dcc64 2, test 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Tests (delfcpp-tests)
@@ -243,3 +252,13 @@ Updated as units land; the short version of what this project shows.
   and run in Node: dev64 and the Delf version give the Windows golden output on all 18 corpus
   files; upstream doesn't compile (IntList's x86 assembler). FPC also caught a duplicate set
   element upstream (CharUtils, "!" twice). delfcpp-wasm/ (933eac1); Delf current-thoughts §5.2.
+- **18 Nov 2026.** Checkouts sorted (the user: the normal directory is the normal Win32 code):
+  `GitHub2\Dev-Cpp` is upstream `master` again; this branch is a worktree, `Dev-Cpp-delf`, and
+  is renamed `delfcpp-units` (was `delf-units`).
+- **18 Nov 2026, tangent: Delf to Rust** (the user: *"you'd think rust might sit closer to delf ..
+  but further from eg vcl"*; *"maybe this is delf -> rust .. small scope good"*). CppTokenizer
+  ported to Rust by hand (`delfcpp-rust/`, 692 lines with tests), built natively and for
+  wasm32-wasip1 (121 KB). Against the Delphi (dev64 and Delf, dcc32): **identical on 3,158
+  files, 4,017,202 tokens** (upstream's parser corpus and every GCC header), native and in Node.
+  The port found three more (25-27); rustc itself refused one. The mapping, construct by
+  construct, is in `delfcpp-rust/README.md`. Next: the test switch.

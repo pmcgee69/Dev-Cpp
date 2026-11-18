@@ -64,15 +64,34 @@ begin
     Selection := 'editor,editorlist';
 end;
 
+function CaptureRawStack(P: System.PExceptionRecord): Pointer; forward;
+function RawStackString(Info: Pointer): string; forward;
+procedure FreeRawStack(Info: Pointer); forward;
+
+function RunOne(Test: TTestClass; const Name: String): Boolean;
+begin
+  try
+    if Name = 'editor' then Result := Test.TestEditor
+    else if Name = 'editorlist' then Result := Test.TestEditorList
+    else if Name = 'actions' then Result := Test.TestActions
+    else Result := Test.TestCompilerOptions;
+  except
+    on E: Exception do
+      Result := Test.Failed(E); // a test's own handler should have caught it; record it anyway
+  end;
+end;
+
 procedure RunTestSwitch(const ResultFile, Selection: String);
 var
   Lines: TStringList;
   Name: String;
   Passed, Failures: Integer;
   Watch: TStopwatch;
-  Ok: Boolean;
   Test: TTestClass;
 begin
+  Exception.GetExceptionStackInfoProc := CaptureRawStack;
+  Exception.GetStackInfoStringProc := RawStackString;
+  Exception.CleanUpStackInfoProc := FreeRawStack;
   Lines := TStringList.Create;
   Test := TTestClass.Create;
   Passed := 0;
@@ -87,16 +106,7 @@ begin
         Continue;
       end;
       Watch := TStopwatch.StartNew;
-      try
-        if Name = 'editor' then Ok := Test.TestEditor
-        else if Name = 'editorlist' then Ok := Test.TestEditorList
-        else if Name = 'actions' then Ok := Test.TestActions
-        else Ok := Test.TestCompilerOptions;
-      except
-        on E: Exception do
-          Ok := Test.Failed(E); // a test's own handler should have caught it; record it anyway
-      end;
-      if Ok then begin
+      if RunOne(Test, Name) then begin
         Lines.Add(Format('PASS %s (%.2f s)', [Name, Watch.Elapsed.TotalSeconds]));
         Inc(Passed);
       end else begin
@@ -132,10 +142,87 @@ begin
   Sleep(Delay);
 end;
 
+// Under the test switch every exception records the code addresses on the stack when it's
+// raised: a raw scan (the return addresses, and some noise), as offsets from the start of the
+// code. delfcpp-tools\mapaddr.ps1 names them from a build's .map (DCC_MapFile=3).
+type
+  TRawStack = record
+    Count: Integer;
+    Addr: array[0..159] of NativeUInt; // Win64's exception dispatch alone fills the first 40 or so
+  end;
+  PRawStack = ^TRawStack;
+
+function CodeStart: NativeUInt;
+begin
+  Result := NativeUInt(HInstance) + $1000;
+end;
+
+{$IFDEF CPUX64}
+function RtlCaptureStackBackTrace(FramesToSkip, FramesToCapture: ULONG; BackTrace: Pointer;
+  BackTraceHash: PULONG): Word; stdcall; external kernel32;
+{$ENDIF}
+
+function CaptureRawStack(P: System.PExceptionRecord): Pointer;
+var
+  S: PRawStack;
+  Here: NativeUInt;
+  Q: PNativeUInt;
+  Top: NativeUInt;
+  Mbi: TMemoryBasicInformation;
+  I: Integer;
+begin
+  New(S);
+  S.Count := 0;
+  {$IFDEF CPUX64}
+  // Win64 unwinds exactly (through the exception dispatcher into the faulting frames): only
+  // the addresses in our code, so no noise
+  var Frames: array[0..159] of NativeUInt;
+  var N := RtlCaptureStackBackTrace(0, Length(Frames), @Frames, nil);
+  for I := 0 to N - 1 do
+    if (S.Count <= High(S.Addr)) and (Frames[I] > CodeStart) and (Frames[I] < CodeStart + $2000000) then begin
+      S.Addr[S.Count] := Frames[I] - CodeStart;
+      Inc(S.Count);
+    end;
+  Exit(S);
+  {$ENDIF}
+  Here := 0;
+  Q := @Here;
+  VirtualQuery(Q, Mbi, SizeOf(Mbi)); // the committed stack region we're in: read only within it
+  Top := NativeUInt(Mbi.BaseAddress) + Mbi.RegionSize;
+  for I := 0 to 8191 do begin // up to 32 or 64 KB of stack
+    if (S.Count > High(S.Addr)) or (NativeUInt(Q) + SizeOf(NativeUInt) > Top) then
+      Break;
+    if (Q^ > CodeStart) and (Q^ < CodeStart + $2000000) then begin // the code is under 32 MB
+      S.Addr[S.Count] := Q^ - CodeStart;
+      Inc(S.Count);
+    end;
+    Inc(Q);
+  end;
+  Result := S;
+end;
+
+function RawStackString(Info: Pointer): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  if Info <> nil then
+    for I := 0 to PRawStack(Info).Count - 1 do
+      Result := Result + Format('%x ', [PRawStack(Info).Addr[I]]);
+end;
+
+procedure FreeRawStack(Info: Pointer);
+begin
+  Dispose(PRawStack(Info));
+end;
+
 function TTestClass.Failed(E: Exception): Boolean;
 begin
   // the step is the status bar message each test sets as it goes
-  fLastError := E.ClassName + ': ' + E.Message + ', at step "' + MainForm.Statusbar.Panels[2].Text + '"';
+  fLastError := E.ClassName + ': ' + E.Message + ', at step "' + MainForm.Statusbar.Panels[2].Text + '"'
+    + Format(', raised at code offset %x', [NativeUInt(ExceptAddr) - CodeStart]);
+  if E.StackTrace <> '' then
+    fLastError := fLastError + ', stack: ' + E.StackTrace;
   Result := False;
 end;
 

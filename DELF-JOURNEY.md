@@ -302,5 +302,7 @@ Updated as units land; the short version of what this project shows.
 - **18 Nov 2026, upstream.** The three undo/redo fixes (29, 31, 32) put on upstream's latest
   `master` as branch `fix-undo-autoindent` in the fork (no Win64, no project markers), tested
   there (`TestEditor` and `TestUndo` pass on Win32, with the test switch applied only for the
-  run), pushed, and a PR to Embarcadero/Dev-Cpp opened in the browser for the user to submit.
-  Error 30 (the highlighter) is held back for its own issue.
+  run), pushed, and merged into the fork's `latest` (`82055e1`, "no PR yet", as the user's other
+  PR branches). `gh --web` didn't open a browser. The PR draft is with the user's others: Delf
+  `experiments/legacy-devcpp-style/devcpp-pr-undo.md`, waiting for the hand tests (symbol
+  completion on and off). Error 30 (the highlighter) is held back for its own issue.

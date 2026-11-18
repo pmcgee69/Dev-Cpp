@@ -104,6 +104,27 @@ arm is now written (*Delf*; `dev64` states it too).
 **Tally so far:** Claude 21 (one suspected), dcc64 2, test 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
+## Tests (delfcpp-tests)
+
+One DUnitX source, the same on both branches, built against three versions of the units by
+unit path alone: the original (upstream master on Win32; master plus only the Win64 port on
+Win64), dev64 and Delf, each on Win32 and Win64 (run-tests.cmd). 62 tests on 18 Nov: dev64
+and Delf pass all; the original fails 11 on Win32 and 13 on Win64, and is crashed by the
+CrashesOriginal tests. Upstream's own parser corpus (Source/Tests/Parser) is among them.
+
+| Error | Pinned by (Regression tests; the original fails them) |
+|---|---|
+| 1, 2 | The Win64 build itself: master doesn't compile for Win64 |
+| 8 | IntList: BadIndexRaisesListError, DuplicateErrorRaises (Win64 only: access violations) |
+| 9 | IntList: FindIsABinarySearch (1,000 misses in a million items: 550-800 ms before) |
+| 10 | IntList: Int64IsStill64Bits (SizeOf(Int64) was 4 in a unit using IntList) |
+| 11 | IntList: ShortStreamRaises (it also caught dev64 missing this fix) |
+| 12 | EditorList: SplitViewVisibleEditors |
+| 15 | Instances: ReadsOnlyCbData (the original returned memory past the message as a file name) |
+| 19 | Utils: SetPathLongPath, CrashesOriginal (the original dies: access violation or stack overflow) |
+| 21-23 | CppTokenizer: DoesNotReadPastTheEnd, seven cases |
+| not yet | 3 (editors in Tag: needs real editors; the in-app Tests.pas), 4 (passes: the port fixed it before the tests' original), 5-7 and 16-18 (window, process and handle calls), 13 (suspected), 20 (Packman), 24 (private, unused) |
+
 ## Fixes (beyond the errors)
 
 Changes made while a unit was rewritten that fix no bug but remove a hazard or a smell.
@@ -213,3 +234,7 @@ Updated as units land; the short version of what this project shows.
   STL headers among them). dev64 and Delf pass all; the original fails only the 6 tokenizer
   regressions. Next: tests for IntList, Instances, Utils.SetPath, EditorList (LayoutFor), and the
   in-app Tests.pas behind a test switch.
+- **18 Nov 2026.** Tests for every unit so far: IntList, Instances, Utils.SetPath, EditorList,
+  CppTokenizer, and the parser corpus; 62 in all. The test program links the app's units without
+  starting the app, so main-bound code tests too. A shared test caught dev64 missing IntList's
+  stream fix (fb29015). The original's SetPath crashes the test program outright.

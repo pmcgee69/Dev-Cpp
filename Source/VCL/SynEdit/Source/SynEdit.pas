@@ -7409,6 +7409,11 @@ begin
                 if SpaceCount2 > 0 then
                   SpaceBuffer := Copy(Lines[BackCounter], 1, SpaceCount2);
                 InternalCaretXY := BufferCoord(1, CaretY +1);
+                // DelfCpp: the block to the caret before typing the indent. ecTab and ecChar
+                // insert through the selection, which was still at the old caret: their undo
+                // record spanned the line break, so undo removed it twice (Tests.TestEditor)
+                BlockBegin := CaretXY;
+                BlockEnd := CaretXY;
                 if SpaceCount2 > 0 then
                 begin
                   for i := 1 to Length(SpaceBuffer) do

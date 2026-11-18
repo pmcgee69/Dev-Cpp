@@ -103,6 +103,8 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 28 | `VCL\SVGIconImageList\Source\SVGIconImageList.inc` (the bundled library) | Its compiler-version table stops at Delphi 11, so Delphi 12 and 13 get none of its feature defines and no published `Scaled` | Built with Delphi 12 or later, every form load stops on "Property Scaled does not exist" (`DataFrm`'s five `TSVGIconImageList`s) | running it: the error dialog (seen again by the user, 18 Nov, in a fresh build of `master`) | `dcef9cf` |
 | 29 | `SynEdit`, `ecLineBreak` with auto-indent | Enter at the end of an indented line moves the caret, then types the indent through the selection, which is still at the old caret. So the indent's undo record also spans the line break, and undo removes that line twice | Live: undo after two braced lines raises `ESynEditStringList: Invalid stringlist index` (upstream `master`, every build). This is the one test upstream's own menu ran, `TestEditor`; the folds had nothing to do with it | test: the test switch; narrowed by cut-down runs and the undo list's records. **Reported upstream at least 10 times, 2021 to 2025**, all but one open: Embarcadero/Dev-Cpp #129, #146 (an exact repro: brackets, a new line, Ctrl+Z deletes the line below), #183 and #223 (users found that turning off Auto Indent avoids it), #192, #234, #238, #252, #273, #338 | `f75118a`, `36475ff` |
 | 30 | `SynHighlighterCpp.InitIdent` | The keyword table was regenerated (91 keywords, hash mod 331) but `FuncAsm` still sits on the old table's slots 70, 191 and 189, now empty, and the function table kept the old size (343), so it reads past `KeyIndices` | Live: an identifier hashing there (`df`, `mo`, `eeee`: 165 of the 18,278 of one to three letters) calls `FuncAsm(-1)` and reads `KeyWords[-1]`. That's garbage on Win32 and **an access violation on Win64 while typing**. `asm` itself (slot 250) never got `FuncAsm` | test: the test switch, once #29 was fixed; the stack from its exact Win64 unwind. Not reported upstream: their releases are 32-bit, where it reads garbage quietly. It began with the fix for #47 ("Some C++ keywords not highlighted", 2020: the maintainer re-patched the keywords after upgrading SynEdit, `cb4a4a5`, 29 Oct 2020) | `f4eb82f`, `588493d` |
+| 31 | `Editor.TSynEditEx.CommandProcessor` | Dev-C++'s extra indent after `{` or `:` on Enter, and the indent it removes when `}` is typed, are written straight into `Lines`, with no undo record | Live: undo and redo put indentation in the wrong places | test: `TestUndo`, the redo cycles of #252 (the undo and redo records written out) | `209e997`, `1ff9c40` |
+| 32 | `SynEdit.RedoItem` | Redo replays a line break through `CommandProcessor(ecLineBreak)`, so auto-indent and the editor's additions run again, and the redo records after it restore that indent too | Live: every redo-all leaves stray tabs (the reports' "redo strays even further", #192, #252, #273) | test: `TestUndo` | `d7d0bf4`, `f3caeef` |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
@@ -113,7 +115,7 @@ arm is now written (*Delf*; `dev64` states it too).
 GCC's 3,137 files). The class browser tokenizes the preprocessor's output, not raw headers, so
 whether it bites there is unchecked.
 
-**Tally so far:** Claude 23 (one suspected), dcc64 2, test 3, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 23 (one suspected), dcc64 2, test 5, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Tests (delfcpp-tests)
@@ -292,3 +294,8 @@ Updated as units land; the short version of what this project shows.
   before an array (error 30). Both fixed on both branches; `TestEditor` passes everywhere.
   Range checks (`{$R+}`) would have stopped #30 at the read on Win32 too: a test build with
   checks on is worth having.
+- **18 Nov 2026.** Upstream's issues checked (the user: *"i feel like people have reported an
+  issue like this"*): error 29 has been reported at least 10 times since 2021. To test the
+  reports rather than assume, `TestUndo` replays them as described. Upstream fails at #146, the
+  exact report. With #29 fixed, the redo reports still failed: two more bugs (31, 32), both
+  fixed. `TestUndo` passes on `dev64` Win32 and Win64 and on Delf Win64.

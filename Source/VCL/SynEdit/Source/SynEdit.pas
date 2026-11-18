@@ -5671,7 +5671,19 @@ begin
         begin
           CaretPt := Item.ChangeStartPos;
           SetCaretAndSelection(CaretPt, CaretPt, CaretPt);
-          CommandProcessor(ecLineBreak, #13, nil);
+          // Replay the line break alone. CommandProcessor ran the whole Enter again (auto-indent
+          // and the editor's own additions, Dev-C++'s extra indent after { included), and the
+          // redo records after this one put that indent back too: redo left stray tabs (#192,
+          // #252, #273). ExecuteCommand with auto-indent off replays just the break; the indent
+          // comes from its own records.
+          var KeepAutoIndent := eoAutoIndent in fOptions;
+          Exclude(fOptions, eoAutoIndent);
+          try
+            ExecuteCommand(ecLineBreak, #13, nil);
+          finally
+            if KeepAutoIndent then
+              Include(fOptions, eoAutoIndent);
+          end;
         end;
       crIndent:
         begin

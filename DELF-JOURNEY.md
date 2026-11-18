@@ -86,7 +86,7 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 11 | `IntList.LoadFromStream` | `Read`, not `ReadBuffer` | A short file loads garbage, silently | Claude, while rewriting | `2797fce` |
 | 12 | `EditorList.GetVisibleEditors` | Split view: the left editor returned as the right one too | After editor options change, the right pane isn't repainted | Claude, while rewriting | `b3437a0`, `6ea85d8` |
 | 13 | `EditorList.CloseEditor` | *Suspected:* returns True for an `InProject` editor the project doesn't hold, without closing it | `CloseAll` would loop forever | Claude, while rewriting | flagged only |
-| 14 | `Tests.TestEditorList` | Stale: expects the right pane focused after opening editors there; switched off in `TestAll` | The test fails at line 166, original and Delf alike | test (run for this project) | not changed |
+| 14 | `Tests.TestEditorList` | Stale: expects the right pane focused after opening editors there; switched off in `TestAll` | The test fails at its step "Open explicitly in the right page control", original and Delf alike (through the test switch too) | test (run for this project) | not changed |
 | 15 | `Instances.GetSentStructData` | Reads another process's `WM_COPYDATA` text up to a terminator, ignoring `cbData` | Live: any process can make Dev-C++ read past the data | Claude, while rewriting | `76f8a86`, `1197288` |
 | 16 | `Instances` (3 calls) | `SizeOf(Buffer)` (bytes) as a count of characters to `GetClassName`, `GetModuleFileName(Ex)` | Windows may write 1,024 characters into 512 (dormant: single-instance code is off) | Claude, while rewriting | `76f8a86`, `1197288` |
 | 17 | `Instances` callback | Process handle not closed when `GetModuleFileNameEx` fails | A handle leak (dormant) | Claude, while rewriting | `76f8a86`, `1197288` |
@@ -100,6 +100,8 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 25 | `CppTokenizer.GetForInit` | A `String` function that never assigns `Result` | Dormant: the caller happens to get `''`, which is what it needs | **Rust**: the port can't compile it as written | logged; kept in the port as `Ok(Vec::new())` |
 | 26 | `CppTokenizer.SimplifyArgs` | Reads `Output[Length + 1]`, one past the end (the "remove before" test when `Head = Index = Length`) | Harmless: Delphi reads the string's `#0`, which counts as blank. Range checks on would raise | Claude, porting to Rust (Rust's indexing panics there) | logged; the port reads it as 0 explicitly |
 | 27 | `CppTokenizer.SimplifyArgs` | "Remove all before" starts at the comma itself, which isn't blank, so it never removes anything | Live, cosmetic: argument lists keep a space before `,` and `)` (`(int a , int b )`; the comment's aim is `(int a, int b)`); seen in GCC's headers | Claude, porting to Rust; the corpus shows it | logged |
+| 28 | `VCL\SVGIconImageList\Source\SVGIconImageList.inc` (the bundled library) | Its compiler-version table stops at Delphi 11, so Delphi 12 and 13 get none of its feature defines and no published `Scaled` | Built with Delphi 12 or later, every form load stops on "Property Scaled does not exist" (`DataFrm`'s five `TSVGIconImageList`s) | running it: the error dialog (seen again by the user, 18 Nov, in a fresh build of `master`) | `dcef9cf` |
+| 29 | SynEdit's undo, through `Tests.TestEditor` | Undoing everything after the fold steps (lines typed, moved down and up, `CollapseAll`, `UncollapseAll`) raises | Live: `ESynEditStringList: Invalid stringlist index 39` in upstream `master` (Win32) and every DelfCpp build. This is the one test upstream's own menu ran | test: the test switch | open |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
@@ -110,7 +112,7 @@ arm is now written (*Delf*; `dev64` states it too).
 GCC's 3,137 files). The class browser tokenizes the preprocessor's output, not raw headers, so
 whether it bites there is unchecked.
 
-**Tally so far:** Claude 23 (one suspected), dcc64 2, test 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 23 (one suspected), dcc64 2, test 2, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Tests (delfcpp-tests)
@@ -120,6 +122,16 @@ unit path alone: the original (upstream master on Win32; master plus only the Wi
 Win64), dev64 and Delf, each on Win32 and Win64 (run-tests.cmd). 62 tests on 18 Nov: dev64
 and Delf pass all; the original fails 11 on Win32 and 13 on Win64, and is crashed by the
 CrashesOriginal tests. Upstream's own parser corpus (Source/Tests/Parser) is among them.
+
+**Upstream's in-app tests, through the test switch** (`0119e98`, `cad9b3d`):
+`devcpp.exe -c <config> -runtests <results> [-tests editor,editorlist,actions,compileroptions]`
+runs `Tests.pas` once the window is up, writes PASS or FAIL per test (the exception, the step)
+and closes with exit code 0 or 1. `delfcpp-tests\run-app-tests.ps1` runs any number of builds,
+each as a copy beside the installed Dev-C++ with a copy of an existing config. The default is
+`editor,editorlist`: `actions` opens every dialog, and `compileroptions` deletes and saves the
+compiler sets. 18 Nov: upstream `master` (Win32, plus error 28's build fix only), `dev64` Win32
+and Win64, and Delf Win64 all give the same result. `TestEditor` fails (error 29) and
+`TestEditorList` fails (error 14).
 
 | Error | Pinned by (Regression tests; the original fails them) |
 |---|---|
@@ -132,7 +144,8 @@ CrashesOriginal tests. Upstream's own parser corpus (Source/Tests/Parser) is amo
 | 15 | Instances: ReadsOnlyCbData (the original returned memory past the message as a file name) |
 | 19 | Utils: SetPathLongPath, CrashesOriginal (the original dies: access violation or stack overflow) |
 | 21-23 | CppTokenizer: DoesNotReadPastTheEnd, seven cases |
-| not yet | 3 (editors in Tag: needs real editors; the in-app Tests.pas), 4 (passes: the port fixed it before the tests' original), 5-7 and 16-18 (window, process and handle calls), 13 (suspected), 20 (Packman), 24 (private, unused) |
+| 29 | The test switch: `TestEditor` (the original fails it too) |
+| not yet | 3 (editors in Tag: needs real editors; the in-app Tests.pas, which runs now but stops before it gets there), 4 (passes: the port fixed it before the tests' original), 5-7 and 16-18 (window, process and handle calls), 13 (suspected), 20 (Packman), 24 (private, unused) |
 
 ## Fixes (beyond the errors)
 
@@ -262,3 +275,8 @@ Updated as units land; the short version of what this project shows.
   files, 4,017,202 tokens** (upstream's parser corpus and every GCC header), native and in Node.
   The port found three more (25-27); rustc itself refused one. The mapping, construct by
   construct, is in `delfcpp-rust/README.md`. Next: the test switch.
+- **18 Nov 2026.** The test switch: upstream's in-app `Tests.pas`, reached before only from a
+  switched-off menu action, now runs unattended (`-runtests`). Its first runs hung on a save
+  dialog after a failed test (fixed: the editors are discarded) and, for upstream's build, on
+  error 28's dialog, which the user saw on screen. The one test upstream's menu ran,
+  `TestEditor`, **fails on upstream itself**: undo after the fold steps raises (error 29).

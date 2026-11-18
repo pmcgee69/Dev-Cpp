@@ -87,7 +87,8 @@ begin
     Parser.ParseGlobalHeaders := False;
     Parser.ResetDefines;
     Parser.AddHardDefineByLine('#define WIN32 1'); // the corpus is written for Windows' gcc
-    Parser.ParseFile(TPath.Combine(CorpusDir, FileName), True);
+    // a Windows path: with "stl/x.h" left in, ExtractFileName kept "stl/" in the file names
+    Parser.ParseFile(TPath.Combine(CorpusDir, FileName.Replace('/', '\')), True);
     Node := Parser.Statements.FirstNode;
     while Assigned(Node) do begin
       S := Node^.Data;

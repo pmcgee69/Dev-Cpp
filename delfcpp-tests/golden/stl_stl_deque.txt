@@ -1,187 +1,187 @@
-﻿preprocessor|_STL_DEQUE_H|||stl/stl_deque.h:57|parent 
-preprocessor|_GLIBCXX_DEQUE_BUF_SIZE|||stl/stl_deque.h:85|parent 
-function|__deque_buf_size|size_t|(size_t __size)|stl/stl_deque.h:89|parent 
-class|_Deque_iterator|struct||stl/stl_deque.h:106|parent 
-typedef|iterator|_Deque_iterator||stl/stl_deque.h:108|parent _Deque_iterator
-typedef|const_iterator|_Deque_iterator||stl/stl_deque.h:109|parent _Deque_iterator
-function|_S_buffer_size|size_t|()|stl/stl_deque.h:111|parent _Deque_iterator
-typedef|iterator_category|std::random_access_iterator_tag||stl/stl_deque.h:114|parent _Deque_iterator
-typedef|value_type|_Tp||stl/stl_deque.h:115|parent _Deque_iterator
-typedef|pointer|_Ptr||stl/stl_deque.h:116|parent _Deque_iterator
-typedef|reference|_Ref||stl/stl_deque.h:117|parent _Deque_iterator
-typedef|size_type|size_t||stl/stl_deque.h:118|parent _Deque_iterator
-typedef|difference_type|ptrdiff_t||stl/stl_deque.h:119|parent _Deque_iterator
-typedef|_Map_pointer|_Tp**||stl/stl_deque.h:120|parent _Deque_iterator
-typedef|_Self|_Deque_iterator||stl/stl_deque.h:121|parent _Deque_iterator
-variable|_M_cur|_Tp*||stl/stl_deque.h:123|parent _Deque_iterator
-variable|_M_first|_Tp*||stl/stl_deque.h:124|parent _Deque_iterator
-variable|_M_last|_Tp*||stl/stl_deque.h:125|parent _Deque_iterator
-variable|_M_node|_Map_pointer||stl/stl_deque.h:126|parent _Deque_iterator
-constructor|_Deque_iterator|_Deque_iterator|(_Tp* __x, _Map_pointer __y)|stl/stl_deque.h:130|parent _Deque_iterator
-constructor|_Deque_iterator|_Deque_iterator|()|stl/stl_deque.h:133|parent _Deque_iterator
-constructor|_Deque_iterator|_Deque_iterator|(const iterator& __x)|stl/stl_deque.h:137|parent _Deque_iterator
-function|operator*|reference|()|stl/stl_deque.h:140|parent _Deque_iterator
-function|operator->|pointer|()|stl/stl_deque.h:144|parent _Deque_iterator
-function|operator++|_Self&|()|stl/stl_deque.h:148|parent _Deque_iterator
-function|operator++|_Self|(int)|stl/stl_deque.h:160|parent _Deque_iterator
-function|operator--|_Self&|()|stl/stl_deque.h:168|parent _Deque_iterator
-function|operator--|_Self|(int)|stl/stl_deque.h:180|parent _Deque_iterator
-function|operator+=|_Self&|(difference_type __n)|stl/stl_deque.h:188|parent _Deque_iterator
-function|operator+|_Self|(difference_type __n)|stl/stl_deque.h:207|parent _Deque_iterator
-function|operator-=|_Self&|(difference_type __n)|stl/stl_deque.h:214|parent _Deque_iterator
-function|operator-|_Self|(difference_type __n)|stl/stl_deque.h:218|parent _Deque_iterator
-function|operator[]|reference|(difference_type __n)|stl/stl_deque.h:225|parent _Deque_iterator
-function|_M_set_node|void|(_Map_pointer __new_node)|stl/stl_deque.h:234|parent _Deque_iterator
-function|operator==|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:247|parent 
-function|operator==|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:254|parent 
-function|operator!=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:260|parent 
-function|operator!=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:267|parent 
-function|operator<|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:273|parent 
-function|operator<|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:281|parent 
-function|operator>|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:288|parent 
-function|operator>|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:295|parent 
-function|operator<=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:301|parent 
-function|operator<=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:308|parent 
-function|operator>=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:314|parent 
-function|operator>=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:321|parent 
-function|operator-|difference_type|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl/stl_deque.h:331|parent 
-function|operator-|difference_type|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl/stl_deque.h:343|parent 
-function|operator+|_Deque_iterator|(ptrdiff_t __n, const _Deque_iterator<_Tp, _Ref, _Ptr>& __x)|stl/stl_deque.h:354|parent 
-function|fill|void|(const _Deque_iterator<_Tp, _Tp&, _Tp*>&, const _Deque_iterator<_Tp, _Tp&, _Tp*>&, const _Tp&)|stl/stl_deque.h:359|parent 
-function|copy|_Deque_iterator|(_Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, _Tp&, _Tp*>)|stl/stl_deque.h:364|parent 
-function|copy|_Deque_iterator|(_Deque_iterator<_Tp, _Tp&, _Tp*> __first, _Deque_iterator<_Tp, _Tp&, _Tp*> __last, _Deque_iterator<_Tp, _Tp&, _Tp*> __result)|stl/stl_deque.h:370|parent 
-function|copy_backward|_Deque_iterator|(_Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, _Tp&, _Tp*>)|stl/stl_deque.h:379|parent 
-function|copy_backward|_Deque_iterator|(_Deque_iterator<_Tp, _Tp&, _Tp*> __first, _Deque_iterator<_Tp, _Tp&, _Tp*> __last, _Deque_iterator<_Tp, _Tp&, _Tp*> __result)|stl/stl_deque.h:385|parent 
-class|_Deque_base|class||stl/stl_deque.h:439|parent 
-typedef|allocator_type|_Alloc||stl/stl_deque.h:442|parent _Deque_base
-function|get_allocator|allocator_type|()|stl/stl_deque.h:445|parent _Deque_base
-typedef|iterator|_Deque_iterator||stl/stl_deque.h:448|parent _Deque_base
-typedef|const_iterator|_Deque_iterator||stl/stl_deque.h:449|parent _Deque_base
-constructor|_Deque_base|_Deque_base|()|stl/stl_deque.h:452|parent _Deque_base
-constructor|_Deque_base|_Deque_base|(size_t __num_elements)|stl/stl_deque.h:456|parent _Deque_base
-constructor|_Deque_base|_Deque_base|(const allocator_type& __a, size_t __num_elements)|stl/stl_deque.h:460|parent _Deque_base
-constructor|_Deque_base|_Deque_base|(const allocator_type& __a)|stl/stl_deque.h:464|parent _Deque_base
-destructor|~_Deque_base|_Deque_base|()|stl/stl_deque.h:482|parent _Deque_base
-typedef|_Map_alloc_type|typename _Alloc::template rebind::other||stl/stl_deque.h:488|parent _Deque_base
-typedef|_Tp_alloc_type|typename _Alloc::template rebind::other||stl/stl_deque.h:490|parent _Deque_base
-class|_Deque_impl|struct||stl/stl_deque.h:492|parent _Deque_base
-variable|_M_map|_Tp**||stl/stl_deque.h:495|parent _Deque_impl
-variable|_M_map_size|size_t||stl/stl_deque.h:496|parent _Deque_impl
-variable|_M_start|iterator||stl/stl_deque.h:497|parent _Deque_impl
-variable|_M_finish|iterator||stl/stl_deque.h:498|parent _Deque_impl
-constructor|_Deque_impl|_Deque_impl|()|stl/stl_deque.h:502|parent _Deque_impl
-constructor|_Deque_impl|_Deque_impl|(const _Tp_alloc_type& __a)|stl/stl_deque.h:507|parent _Deque_impl
-function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl/stl_deque.h:519|parent _Deque_base
-function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl/stl_deque.h:523|parent _Deque_base
-function|_M_get_map_allocator|_Map_alloc_type|()|stl/stl_deque.h:527|parent _Deque_base
-function|_M_allocate_node|_Tp*|()|stl/stl_deque.h:531|parent _Deque_base
-function|_M_deallocate_node|void|(_Tp* __p)|stl/stl_deque.h:537|parent _Deque_base
-function|_M_allocate_map|_Tp**|(size_t __n)|stl/stl_deque.h:543|parent _Deque_base
-function|_M_deallocate_map|void|(_Tp** __p, size_t __n)|stl/stl_deque.h:547|parent _Deque_base
-function|_M_initialize_map|void|(size_t)|stl/stl_deque.h:551|parent _Deque_base
-function|_M_create_nodes|void|(_Tp** __nstart, _Tp** __nfinish)|stl/stl_deque.h:552|parent _Deque_base
-function|_M_destroy_nodes|void|(_Tp** __nstart, _Tp** __nfinish)|stl/stl_deque.h:553|parent _Deque_base
-enum|_S_initial_map_size|enum||stl/stl_deque.h:554|parent _Deque_base
-variable|_M_impl|_Deque_impl||stl/stl_deque.h:556|parent _Deque_base
-function|_M_initialize_map|void|(size_t __num_elements)|stl/stl_deque.h:582|parent _Deque_base
-class|deque|class||stl/stl_deque.h:730|parent 
-typedef|_Alloc_value_type|typename _Alloc::value_type||stl/stl_deque.h:733|parent deque
-typedef|_Base|_Deque_base||stl/stl_deque.h:737|parent deque
-typedef|_Tp_alloc_type|typename _Base::_Tp_alloc_type||stl/stl_deque.h:738|parent deque
-typedef|value_type|_Tp||stl/stl_deque.h:741|parent deque
-typedef|pointer|typename _Tp_alloc_type::pointer||stl/stl_deque.h:742|parent deque
-typedef|const_pointer|typename _Tp_alloc_type::const_pointer||stl/stl_deque.h:743|parent deque
-typedef|reference|typename _Tp_alloc_type::reference||stl/stl_deque.h:744|parent deque
-typedef|const_reference|typename _Tp_alloc_type::const_reference||stl/stl_deque.h:745|parent deque
-typedef|iterator|typename _Base::iterator||stl/stl_deque.h:746|parent deque
-typedef|const_iterator|typename _Base::const_iterator||stl/stl_deque.h:747|parent deque
-typedef|const_reverse_iterator|std::reverse_iterator||stl/stl_deque.h:748|parent deque
-typedef|reverse_iterator|std::reverse_iterator||stl/stl_deque.h:749|parent deque
-typedef|size_type|size_t||stl/stl_deque.h:750|parent deque
-typedef|difference_type|ptrdiff_t||stl/stl_deque.h:751|parent deque
-typedef|allocator_type|_Alloc||stl/stl_deque.h:752|parent deque
-typedef|_Map_pointer|pointer*||stl/stl_deque.h:755|parent deque
-function|_S_buffer_size|size_t|()|stl/stl_deque.h:757|parent deque
-constructor|deque|deque|()|stl/stl_deque.h:783|parent deque
-constructor|deque|deque|(const allocator_type& __a)|stl/stl_deque.h:791|parent deque
-constructor|deque|deque|(size_type __n, const value_type& __value = value_type(), const allocator_type& __a = allocator_type())|stl/stl_deque.h:830|parent deque
-constructor|deque|deque|(const deque& __x)|stl/stl_deque.h:842|parent deque
-constructor|deque|deque|(_InputIterator __first, _InputIterator __last, const allocator_type& __a = allocator_type())|stl/stl_deque.h:904|parent deque
-destructor|~deque|deque|()|stl/stl_deque.h:917|parent deque
-function|operator=|deque&|(const deque& __x)|stl/stl_deque.h:928|parent deque
-function|assign|void|(size_type __n, const value_type& __val)|stl/stl_deque.h:978|parent deque
-function|assign|void|(_InputIterator __first, _InputIterator __last)|stl/stl_deque.h:1002|parent deque
-function|get_allocator|allocator_type|()|stl/stl_deque.h:1028|parent deque
-function|begin|iterator|()|stl/stl_deque.h:1037|parent deque
-function|begin|const_iterator|()|stl/stl_deque.h:1045|parent deque
-function|end|iterator|()|stl/stl_deque.h:1054|parent deque
-function|end|const_iterator|()|stl/stl_deque.h:1063|parent deque
-function|rbegin|reverse_iterator|()|stl/stl_deque.h:1072|parent deque
-function|rbegin|const_reverse_iterator|()|stl/stl_deque.h:1081|parent deque
-function|rend|reverse_iterator|()|stl/stl_deque.h:1090|parent deque
-function|rend|const_reverse_iterator|()|stl/stl_deque.h:1099|parent deque
-function|size|size_type|()|stl/stl_deque.h:1142|parent deque
-function|max_size|size_type|()|stl/stl_deque.h:1147|parent deque
-function|resize|void|(size_type __new_size, value_type __x = value_type())|stl/stl_deque.h:1205|parent deque
-function|empty|bool|()|stl/stl_deque.h:1228|parent deque
-function|operator[]|reference|(size_type __n)|stl/stl_deque.h:1244|parent deque
-function|operator[]|const_reference|(size_type __n)|stl/stl_deque.h:1259|parent deque
-function|_M_range_check|void|(size_type __n)|stl/stl_deque.h:1265|parent deque
-function|at|reference|(size_type __n)|stl/stl_deque.h:1284|parent deque
-function|at|const_reference|(size_type __n)|stl/stl_deque.h:1302|parent deque
-function|front|reference|()|stl/stl_deque.h:1313|parent deque
-function|front|const_reference|()|stl/stl_deque.h:1321|parent deque
-function|back|reference|()|stl/stl_deque.h:1329|parent deque
-function|back|const_reference|()|stl/stl_deque.h:1341|parent deque
-function|push_front|void|(const value_type& __x)|stl/stl_deque.h:1359|parent deque
-function|push_back|void|(const value_type& __x)|stl/stl_deque.h:1390|parent deque
-function|pop_front|void|()|stl/stl_deque.h:1421|parent deque
-function|pop_back|void|()|stl/stl_deque.h:1442|parent deque
-function|insert|iterator|(iterator __position, const value_type& __x)|stl/stl_deque.h:1479|parent deque
-function|insert|void|(iterator __position, size_type __n, const value_type& __x)|stl/stl_deque.h:1519|parent deque
-function|insert|void|(iterator __position, _InputIterator __first, _InputIterator __last)|stl/stl_deque.h:1542|parent deque
-function|erase|iterator|(iterator __position)|stl/stl_deque.h:1565|parent deque
-function|erase|iterator|(iterator __first, iterator __last)|stl/stl_deque.h:1584|parent deque
-function|swap|void|(deque& __x)|stl/stl_deque.h:1596|parent deque
-function|clear|void|()|stl/stl_deque.h:1616|parent deque
-function|_M_initialize_dispatch|void|(_Integer __n, _Integer __x, __true_type)|stl/stl_deque.h:1628|parent deque
-function|_M_initialize_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl/stl_deque.h:1637|parent deque
-function|_M_range_initialize|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_deque.h:1659|parent deque
-function|_M_range_initialize|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_deque.h:1665|parent deque
-function|_M_fill_initialize|void|(const value_type& __value)|stl/stl_deque.h:1680|parent deque
-function|_M_assign_dispatch|void|(_Integer __n, _Integer __val, __true_type)|stl/stl_deque.h:1697|parent deque
-function|_M_assign_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl/stl_deque.h:1703|parent deque
-function|_M_assign_aux|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_deque.h:1714|parent deque
-function|_M_assign_aux|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_deque.h:1720|parent deque
-function|_M_fill_assign|void|(size_type __n, const value_type& __val)|stl/stl_deque.h:1738|parent deque
-function|_M_push_back_aux|void|(const value_type&)|stl/stl_deque.h:1755|parent deque
-function|_M_push_front_aux|void|(const value_type&)|stl/stl_deque.h:1757|parent deque
-function|_M_pop_back_aux|void|()|stl/stl_deque.h:1766|parent deque
-function|_M_pop_front_aux|void|()|stl/stl_deque.h:1768|parent deque
-function|_M_insert_dispatch|void|(iterator __pos, _Integer __n, _Integer __x, __true_type)|stl/stl_deque.h:1780|parent deque
-function|_M_insert_dispatch|void|(iterator __pos, _InputIterator __first, _InputIterator __last, __false_type)|stl/stl_deque.h:1787|parent deque
-function|_M_range_insert_aux|void|(iterator __pos, _InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl/stl_deque.h:1799|parent deque
-function|_M_range_insert_aux|void|(iterator __pos, _ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl/stl_deque.h:1805|parent deque
-function|_M_fill_insert|void|(iterator __pos, size_type __n, const value_type& __x)|stl/stl_deque.h:1812|parent deque
-function|_M_insert_aux|iterator|(iterator __pos, const value_type& __x)|stl/stl_deque.h:1817|parent deque
-function|_M_insert_aux|void|(iterator __pos, size_type __n, const value_type& __x)|stl/stl_deque.h:1826|parent deque
-function|_M_insert_aux|void|(iterator __pos, _ForwardIterator __first, _ForwardIterator __last, size_type __n)|stl/stl_deque.h:1831|parent deque
-function|_M_destroy_data_aux|void|(iterator __first, iterator __last)|stl/stl_deque.h:1839|parent deque
-function|_M_destroy_data|void|(iterator __first, iterator __last, const _Alloc1&)|stl/stl_deque.h:1845|parent deque
-function|_M_destroy_data|void|(iterator __first, iterator __last, const std::allocator<_Tp>&)|stl/stl_deque.h:1849|parent deque
-function|_M_erase_at_begin|void|(iterator __pos)|stl/stl_deque.h:1858|parent deque
-function|_M_erase_at_end|void|(iterator __pos)|stl/stl_deque.h:1868|parent deque
-function|_M_reserve_elements_at_front|iterator|(size_type __n)|stl/stl_deque.h:1888|parent deque
-function|_M_reserve_elements_at_back|iterator|(size_type __n)|stl/stl_deque.h:1898|parent deque
-function|_M_new_elements_at_front|void|(size_type __new_elements)|stl/stl_deque.h:1908|parent deque
-function|_M_new_elements_at_back|void|(size_type __new_elements)|stl/stl_deque.h:1911|parent deque
-function|_M_reserve_map_at_back|void|(size_type __nodes_to_add = 1)|stl/stl_deque.h:1924|parent deque
-function|_M_reserve_map_at_front|void|(size_type __nodes_to_add = 1)|stl/stl_deque.h:1932|parent deque
-function|_M_reallocate_map|void|(size_type __nodes_to_add, bool __add_at_front)|stl/stl_deque.h:1940|parent deque
-function|operator==|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:1957|parent 
-function|operator<|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:1975|parent 
-function|operator!=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:1983|parent 
-function|operator>|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:1990|parent 
-function|operator<=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:1997|parent 
-function|operator>=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:2004|parent 
-function|swap|void|(deque<_Tp, _Alloc>& __x, deque<_Tp, _Alloc>& __y)|stl/stl_deque.h:2011|parent 
+﻿preprocessor|_STL_DEQUE_H|||stl_deque.h:57|parent 
+preprocessor|_GLIBCXX_DEQUE_BUF_SIZE|||stl_deque.h:85|parent 
+function|__deque_buf_size|size_t|(size_t __size)|stl_deque.h:89|parent 
+class|_Deque_iterator|struct||stl_deque.h:106|parent 
+typedef|iterator|_Deque_iterator||stl_deque.h:108|parent _Deque_iterator
+typedef|const_iterator|_Deque_iterator||stl_deque.h:109|parent _Deque_iterator
+function|_S_buffer_size|size_t|()|stl_deque.h:111|parent _Deque_iterator
+typedef|iterator_category|std::random_access_iterator_tag||stl_deque.h:114|parent _Deque_iterator
+typedef|value_type|_Tp||stl_deque.h:115|parent _Deque_iterator
+typedef|pointer|_Ptr||stl_deque.h:116|parent _Deque_iterator
+typedef|reference|_Ref||stl_deque.h:117|parent _Deque_iterator
+typedef|size_type|size_t||stl_deque.h:118|parent _Deque_iterator
+typedef|difference_type|ptrdiff_t||stl_deque.h:119|parent _Deque_iterator
+typedef|_Map_pointer|_Tp**||stl_deque.h:120|parent _Deque_iterator
+typedef|_Self|_Deque_iterator||stl_deque.h:121|parent _Deque_iterator
+variable|_M_cur|_Tp*||stl_deque.h:123|parent _Deque_iterator
+variable|_M_first|_Tp*||stl_deque.h:124|parent _Deque_iterator
+variable|_M_last|_Tp*||stl_deque.h:125|parent _Deque_iterator
+variable|_M_node|_Map_pointer||stl_deque.h:126|parent _Deque_iterator
+constructor|_Deque_iterator|_Deque_iterator|(_Tp* __x, _Map_pointer __y)|stl_deque.h:130|parent _Deque_iterator
+constructor|_Deque_iterator|_Deque_iterator|()|stl_deque.h:133|parent _Deque_iterator
+constructor|_Deque_iterator|_Deque_iterator|(const iterator& __x)|stl_deque.h:137|parent _Deque_iterator
+function|operator*|reference|()|stl_deque.h:140|parent _Deque_iterator
+function|operator->|pointer|()|stl_deque.h:144|parent _Deque_iterator
+function|operator++|_Self&|()|stl_deque.h:148|parent _Deque_iterator
+function|operator++|_Self|(int)|stl_deque.h:160|parent _Deque_iterator
+function|operator--|_Self&|()|stl_deque.h:168|parent _Deque_iterator
+function|operator--|_Self|(int)|stl_deque.h:180|parent _Deque_iterator
+function|operator+=|_Self&|(difference_type __n)|stl_deque.h:188|parent _Deque_iterator
+function|operator+|_Self|(difference_type __n)|stl_deque.h:207|parent _Deque_iterator
+function|operator-=|_Self&|(difference_type __n)|stl_deque.h:214|parent _Deque_iterator
+function|operator-|_Self|(difference_type __n)|stl_deque.h:218|parent _Deque_iterator
+function|operator[]|reference|(difference_type __n)|stl_deque.h:225|parent _Deque_iterator
+function|_M_set_node|void|(_Map_pointer __new_node)|stl_deque.h:234|parent _Deque_iterator
+function|operator==|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:247|parent 
+function|operator==|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:254|parent 
+function|operator!=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:260|parent 
+function|operator!=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:267|parent 
+function|operator<|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:273|parent 
+function|operator<|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:281|parent 
+function|operator>|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:288|parent 
+function|operator>|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:295|parent 
+function|operator<=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:301|parent 
+function|operator<=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:308|parent 
+function|operator>=|bool|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:314|parent 
+function|operator>=|bool|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:321|parent 
+function|operator-|difference_type|(const _Deque_iterator<_Tp, _Ref, _Ptr>& __x, const _Deque_iterator<_Tp, _Ref, _Ptr>& __y)|stl_deque.h:331|parent 
+function|operator-|difference_type|(const _Deque_iterator<_Tp, _RefL, _PtrL>& __x, const _Deque_iterator<_Tp, _RefR, _PtrR>& __y)|stl_deque.h:343|parent 
+function|operator+|_Deque_iterator|(ptrdiff_t __n, const _Deque_iterator<_Tp, _Ref, _Ptr>& __x)|stl_deque.h:354|parent 
+function|fill|void|(const _Deque_iterator<_Tp, _Tp&, _Tp*>&, const _Deque_iterator<_Tp, _Tp&, _Tp*>&, const _Tp&)|stl_deque.h:359|parent 
+function|copy|_Deque_iterator|(_Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, _Tp&, _Tp*>)|stl_deque.h:364|parent 
+function|copy|_Deque_iterator|(_Deque_iterator<_Tp, _Tp&, _Tp*> __first, _Deque_iterator<_Tp, _Tp&, _Tp*> __last, _Deque_iterator<_Tp, _Tp&, _Tp*> __result)|stl_deque.h:370|parent 
+function|copy_backward|_Deque_iterator|(_Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, const _Tp&, const _Tp*>, _Deque_iterator<_Tp, _Tp&, _Tp*>)|stl_deque.h:379|parent 
+function|copy_backward|_Deque_iterator|(_Deque_iterator<_Tp, _Tp&, _Tp*> __first, _Deque_iterator<_Tp, _Tp&, _Tp*> __last, _Deque_iterator<_Tp, _Tp&, _Tp*> __result)|stl_deque.h:385|parent 
+class|_Deque_base|class||stl_deque.h:439|parent 
+typedef|allocator_type|_Alloc||stl_deque.h:442|parent _Deque_base
+function|get_allocator|allocator_type|()|stl_deque.h:445|parent _Deque_base
+typedef|iterator|_Deque_iterator||stl_deque.h:448|parent _Deque_base
+typedef|const_iterator|_Deque_iterator||stl_deque.h:449|parent _Deque_base
+constructor|_Deque_base|_Deque_base|()|stl_deque.h:452|parent _Deque_base
+constructor|_Deque_base|_Deque_base|(size_t __num_elements)|stl_deque.h:456|parent _Deque_base
+constructor|_Deque_base|_Deque_base|(const allocator_type& __a, size_t __num_elements)|stl_deque.h:460|parent _Deque_base
+constructor|_Deque_base|_Deque_base|(const allocator_type& __a)|stl_deque.h:464|parent _Deque_base
+destructor|~_Deque_base|_Deque_base|()|stl_deque.h:482|parent _Deque_base
+typedef|_Map_alloc_type|typename _Alloc::template rebind::other||stl_deque.h:488|parent _Deque_base
+typedef|_Tp_alloc_type|typename _Alloc::template rebind::other||stl_deque.h:490|parent _Deque_base
+class|_Deque_impl|struct||stl_deque.h:492|parent _Deque_base
+variable|_M_map|_Tp**||stl_deque.h:495|parent _Deque_impl
+variable|_M_map_size|size_t||stl_deque.h:496|parent _Deque_impl
+variable|_M_start|iterator||stl_deque.h:497|parent _Deque_impl
+variable|_M_finish|iterator||stl_deque.h:498|parent _Deque_impl
+constructor|_Deque_impl|_Deque_impl|()|stl_deque.h:502|parent _Deque_impl
+constructor|_Deque_impl|_Deque_impl|(const _Tp_alloc_type& __a)|stl_deque.h:507|parent _Deque_impl
+function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl_deque.h:519|parent _Deque_base
+function|_M_get_Tp_allocator|_Tp_alloc_type&|()|stl_deque.h:523|parent _Deque_base
+function|_M_get_map_allocator|_Map_alloc_type|()|stl_deque.h:527|parent _Deque_base
+function|_M_allocate_node|_Tp*|()|stl_deque.h:531|parent _Deque_base
+function|_M_deallocate_node|void|(_Tp* __p)|stl_deque.h:537|parent _Deque_base
+function|_M_allocate_map|_Tp**|(size_t __n)|stl_deque.h:543|parent _Deque_base
+function|_M_deallocate_map|void|(_Tp** __p, size_t __n)|stl_deque.h:547|parent _Deque_base
+function|_M_initialize_map|void|(size_t)|stl_deque.h:551|parent _Deque_base
+function|_M_create_nodes|void|(_Tp** __nstart, _Tp** __nfinish)|stl_deque.h:552|parent _Deque_base
+function|_M_destroy_nodes|void|(_Tp** __nstart, _Tp** __nfinish)|stl_deque.h:553|parent _Deque_base
+enum|_S_initial_map_size|enum||stl_deque.h:554|parent _Deque_base
+variable|_M_impl|_Deque_impl||stl_deque.h:556|parent _Deque_base
+function|_M_initialize_map|void|(size_t __num_elements)|stl_deque.h:582|parent _Deque_base
+class|deque|class||stl_deque.h:730|parent 
+typedef|_Alloc_value_type|typename _Alloc::value_type||stl_deque.h:733|parent deque
+typedef|_Base|_Deque_base||stl_deque.h:737|parent deque
+typedef|_Tp_alloc_type|typename _Base::_Tp_alloc_type||stl_deque.h:738|parent deque
+typedef|value_type|_Tp||stl_deque.h:741|parent deque
+typedef|pointer|typename _Tp_alloc_type::pointer||stl_deque.h:742|parent deque
+typedef|const_pointer|typename _Tp_alloc_type::const_pointer||stl_deque.h:743|parent deque
+typedef|reference|typename _Tp_alloc_type::reference||stl_deque.h:744|parent deque
+typedef|const_reference|typename _Tp_alloc_type::const_reference||stl_deque.h:745|parent deque
+typedef|iterator|typename _Base::iterator||stl_deque.h:746|parent deque
+typedef|const_iterator|typename _Base::const_iterator||stl_deque.h:747|parent deque
+typedef|const_reverse_iterator|std::reverse_iterator||stl_deque.h:748|parent deque
+typedef|reverse_iterator|std::reverse_iterator||stl_deque.h:749|parent deque
+typedef|size_type|size_t||stl_deque.h:750|parent deque
+typedef|difference_type|ptrdiff_t||stl_deque.h:751|parent deque
+typedef|allocator_type|_Alloc||stl_deque.h:752|parent deque
+typedef|_Map_pointer|pointer*||stl_deque.h:755|parent deque
+function|_S_buffer_size|size_t|()|stl_deque.h:757|parent deque
+constructor|deque|deque|()|stl_deque.h:783|parent deque
+constructor|deque|deque|(const allocator_type& __a)|stl_deque.h:791|parent deque
+constructor|deque|deque|(size_type __n, const value_type& __value = value_type(), const allocator_type& __a = allocator_type())|stl_deque.h:830|parent deque
+constructor|deque|deque|(const deque& __x)|stl_deque.h:842|parent deque
+constructor|deque|deque|(_InputIterator __first, _InputIterator __last, const allocator_type& __a = allocator_type())|stl_deque.h:904|parent deque
+destructor|~deque|deque|()|stl_deque.h:917|parent deque
+function|operator=|deque&|(const deque& __x)|stl_deque.h:928|parent deque
+function|assign|void|(size_type __n, const value_type& __val)|stl_deque.h:978|parent deque
+function|assign|void|(_InputIterator __first, _InputIterator __last)|stl_deque.h:1002|parent deque
+function|get_allocator|allocator_type|()|stl_deque.h:1028|parent deque
+function|begin|iterator|()|stl_deque.h:1037|parent deque
+function|begin|const_iterator|()|stl_deque.h:1045|parent deque
+function|end|iterator|()|stl_deque.h:1054|parent deque
+function|end|const_iterator|()|stl_deque.h:1063|parent deque
+function|rbegin|reverse_iterator|()|stl_deque.h:1072|parent deque
+function|rbegin|const_reverse_iterator|()|stl_deque.h:1081|parent deque
+function|rend|reverse_iterator|()|stl_deque.h:1090|parent deque
+function|rend|const_reverse_iterator|()|stl_deque.h:1099|parent deque
+function|size|size_type|()|stl_deque.h:1142|parent deque
+function|max_size|size_type|()|stl_deque.h:1147|parent deque
+function|resize|void|(size_type __new_size, value_type __x = value_type())|stl_deque.h:1205|parent deque
+function|empty|bool|()|stl_deque.h:1228|parent deque
+function|operator[]|reference|(size_type __n)|stl_deque.h:1244|parent deque
+function|operator[]|const_reference|(size_type __n)|stl_deque.h:1259|parent deque
+function|_M_range_check|void|(size_type __n)|stl_deque.h:1265|parent deque
+function|at|reference|(size_type __n)|stl_deque.h:1284|parent deque
+function|at|const_reference|(size_type __n)|stl_deque.h:1302|parent deque
+function|front|reference|()|stl_deque.h:1313|parent deque
+function|front|const_reference|()|stl_deque.h:1321|parent deque
+function|back|reference|()|stl_deque.h:1329|parent deque
+function|back|const_reference|()|stl_deque.h:1341|parent deque
+function|push_front|void|(const value_type& __x)|stl_deque.h:1359|parent deque
+function|push_back|void|(const value_type& __x)|stl_deque.h:1390|parent deque
+function|pop_front|void|()|stl_deque.h:1421|parent deque
+function|pop_back|void|()|stl_deque.h:1442|parent deque
+function|insert|iterator|(iterator __position, const value_type& __x)|stl_deque.h:1479|parent deque
+function|insert|void|(iterator __position, size_type __n, const value_type& __x)|stl_deque.h:1519|parent deque
+function|insert|void|(iterator __position, _InputIterator __first, _InputIterator __last)|stl_deque.h:1542|parent deque
+function|erase|iterator|(iterator __position)|stl_deque.h:1565|parent deque
+function|erase|iterator|(iterator __first, iterator __last)|stl_deque.h:1584|parent deque
+function|swap|void|(deque& __x)|stl_deque.h:1596|parent deque
+function|clear|void|()|stl_deque.h:1616|parent deque
+function|_M_initialize_dispatch|void|(_Integer __n, _Integer __x, __true_type)|stl_deque.h:1628|parent deque
+function|_M_initialize_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl_deque.h:1637|parent deque
+function|_M_range_initialize|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl_deque.h:1659|parent deque
+function|_M_range_initialize|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl_deque.h:1665|parent deque
+function|_M_fill_initialize|void|(const value_type& __value)|stl_deque.h:1680|parent deque
+function|_M_assign_dispatch|void|(_Integer __n, _Integer __val, __true_type)|stl_deque.h:1697|parent deque
+function|_M_assign_dispatch|void|(_InputIterator __first, _InputIterator __last, __false_type)|stl_deque.h:1703|parent deque
+function|_M_assign_aux|void|(_InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl_deque.h:1714|parent deque
+function|_M_assign_aux|void|(_ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl_deque.h:1720|parent deque
+function|_M_fill_assign|void|(size_type __n, const value_type& __val)|stl_deque.h:1738|parent deque
+function|_M_push_back_aux|void|(const value_type&)|stl_deque.h:1755|parent deque
+function|_M_push_front_aux|void|(const value_type&)|stl_deque.h:1757|parent deque
+function|_M_pop_back_aux|void|()|stl_deque.h:1766|parent deque
+function|_M_pop_front_aux|void|()|stl_deque.h:1768|parent deque
+function|_M_insert_dispatch|void|(iterator __pos, _Integer __n, _Integer __x, __true_type)|stl_deque.h:1780|parent deque
+function|_M_insert_dispatch|void|(iterator __pos, _InputIterator __first, _InputIterator __last, __false_type)|stl_deque.h:1787|parent deque
+function|_M_range_insert_aux|void|(iterator __pos, _InputIterator __first, _InputIterator __last, std::input_iterator_tag)|stl_deque.h:1799|parent deque
+function|_M_range_insert_aux|void|(iterator __pos, _ForwardIterator __first, _ForwardIterator __last, std::forward_iterator_tag)|stl_deque.h:1805|parent deque
+function|_M_fill_insert|void|(iterator __pos, size_type __n, const value_type& __x)|stl_deque.h:1812|parent deque
+function|_M_insert_aux|iterator|(iterator __pos, const value_type& __x)|stl_deque.h:1817|parent deque
+function|_M_insert_aux|void|(iterator __pos, size_type __n, const value_type& __x)|stl_deque.h:1826|parent deque
+function|_M_insert_aux|void|(iterator __pos, _ForwardIterator __first, _ForwardIterator __last, size_type __n)|stl_deque.h:1831|parent deque
+function|_M_destroy_data_aux|void|(iterator __first, iterator __last)|stl_deque.h:1839|parent deque
+function|_M_destroy_data|void|(iterator __first, iterator __last, const _Alloc1&)|stl_deque.h:1845|parent deque
+function|_M_destroy_data|void|(iterator __first, iterator __last, const std::allocator<_Tp>&)|stl_deque.h:1849|parent deque
+function|_M_erase_at_begin|void|(iterator __pos)|stl_deque.h:1858|parent deque
+function|_M_erase_at_end|void|(iterator __pos)|stl_deque.h:1868|parent deque
+function|_M_reserve_elements_at_front|iterator|(size_type __n)|stl_deque.h:1888|parent deque
+function|_M_reserve_elements_at_back|iterator|(size_type __n)|stl_deque.h:1898|parent deque
+function|_M_new_elements_at_front|void|(size_type __new_elements)|stl_deque.h:1908|parent deque
+function|_M_new_elements_at_back|void|(size_type __new_elements)|stl_deque.h:1911|parent deque
+function|_M_reserve_map_at_back|void|(size_type __nodes_to_add = 1)|stl_deque.h:1924|parent deque
+function|_M_reserve_map_at_front|void|(size_type __nodes_to_add = 1)|stl_deque.h:1932|parent deque
+function|_M_reallocate_map|void|(size_type __nodes_to_add, bool __add_at_front)|stl_deque.h:1940|parent deque
+function|operator==|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:1957|parent 
+function|operator<|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:1975|parent 
+function|operator!=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:1983|parent 
+function|operator>|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:1990|parent 
+function|operator<=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:1997|parent 
+function|operator>=|bool|(const deque<_Tp, _Alloc>& __x, const deque<_Tp, _Alloc>& __y)|stl_deque.h:2004|parent 
+function|swap|void|(deque<_Tp, _Alloc>& __x, deque<_Tp, _Alloc>& __y)|stl_deque.h:2011|parent 

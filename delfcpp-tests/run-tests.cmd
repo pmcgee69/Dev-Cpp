@@ -23,7 +23,7 @@ set WHICH=%1
 if "%WHICH%"=="" set WHICH=all
 
 rem The units under test, as paths under Source (the original's are taken from git)
-set UNITS=VCL/ClassBrowsing/CppTokenizer.pas VCL/ClassBrowsing/IntList.pas Instances.pas Utils.pas
+set UNITS=VCL/ClassBrowsing/CppTokenizer.pas VCL/ClassBrowsing/IntList.pas Instances.pas Utils.pas EditorList.pas
 
 rem Every other unit comes from the version's own Source, as devcpp.dproj finds them
 set "SUB=VCL\ClassBrowsing;VCL\SVGIconImageList\Svg;VCL\SVGIconImageList\Source;VCL\devFileMonitor;VCL\devShortcuts;VCL\CompOptionsList;VCL\SynEdit\Source;VCL\vcl-styles-utils\Common;VCL\DDetours\Source"
@@ -72,10 +72,17 @@ for %%P in (32 64) do (
     if "%V%"=="original" (
       rem the tests that kill the original, run on their own: a crash here is the bug they pin
       "!BIN!\DelfCppTests.exe" --exitbehavior:Continue --include:CrashesOriginal > "!BIN!\results-crashes.txt" 2>&1
-      if "!errorlevel!"=="-1073741819" (
-        echo === %V% Win%%P: the CrashesOriginal tests crash the original, as expected: access violation
+      set "CRC=!errorlevel!"
+      rem a crash is an NTSTATUS exit code, negative here; which one depends on what the overrun hits
+      set "CRASH="
+      if "!CRC!"=="-1073741819" set "CRASH=access violation (0xC0000005)"
+      if "!CRC!"=="-1073741571" set "CRASH=stack overflow (0xC00000FD)"
+      if "!CRC!"=="-1073740791" set "CRASH=stack buffer overrun (0xC0000409)"
+      if not defined CRASH if !CRC! LSS 0 set "CRASH=exit code !CRC!"
+      if defined CRASH (
+        echo === %V% Win%%P: the CrashesOriginal tests crash the original, as expected: !CRASH!
       ) else (
-        echo === %V% Win%%P: the CrashesOriginal tests did not crash the original, exit code !errorlevel!
+        echo === %V% Win%%P: the CrashesOriginal tests did not crash the original, exit code !CRC!
       )
     )
     set "R=passed"

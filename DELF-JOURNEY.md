@@ -238,3 +238,8 @@ Updated as units land; the short version of what this project shows.
   CppTokenizer, and the parser corpus; 62 in all. The test program links the app's units without
   starting the app, so main-bound code tests too. A shared test caught dev64 missing IntList's
   stream fix (fb29015). The original's SetPath crashes the test program outright.
+- **18 Nov 2026, tangent: WebAssembly** (the user: *"It would be cool to have just wasm as our
+  compile ourselves target"*). The class browser's chain compiled by Free Pascal to wasm32-wasip1
+  and run in Node: dev64 and the Delf version give the Windows golden output on all 18 corpus
+  files; upstream doesn't compile (IntList's x86 assembler). FPC also caught a duplicate set
+  element upstream (CharUtils, "!" twice). delfcpp-wasm/ (933eac1); Delf current-thoughts §5.2.

@@ -101,7 +101,8 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 26 | `CppTokenizer.SimplifyArgs` | Reads `Output[Length + 1]`, one past the end (the "remove before" test when `Head = Index = Length`) | Harmless: Delphi reads the string's `#0`, which counts as blank. Range checks on would raise | Claude, porting to Rust (Rust's indexing panics there) | logged; the port reads it as 0 explicitly |
 | 27 | `CppTokenizer.SimplifyArgs` | "Remove all before" starts at the comma itself, which isn't blank, so it never removes anything | Live, cosmetic: argument lists keep a space before `,` and `)` (`(int a , int b )`; the comment's aim is `(int a, int b)`); seen in GCC's headers | Claude, porting to Rust; the corpus shows it | logged |
 | 28 | `VCL\SVGIconImageList\Source\SVGIconImageList.inc` (the bundled library) | Its compiler-version table stops at Delphi 11, so Delphi 12 and 13 get none of its feature defines and no published `Scaled` | Built with Delphi 12 or later, every form load stops on "Property Scaled does not exist" (`DataFrm`'s five `TSVGIconImageList`s) | running it: the error dialog (seen again by the user, 18 Nov, in a fresh build of `master`) | `dcef9cf` |
-| 29 | SynEdit's undo, through `Tests.TestEditor` | Undoing everything after the fold steps (lines typed, moved down and up, `CollapseAll`, `UncollapseAll`) raises | Live: `ESynEditStringList: Invalid stringlist index 39` in upstream `master` (Win32) and every DelfCpp build. This is the one test upstream's own menu ran | test: the test switch | open |
+| 29 | `SynEdit`, `ecLineBreak` with auto-indent | Enter at the end of an indented line moves the caret, then types the indent through the selection, which is still at the old caret. So the indent's undo record also spans the line break, and undo removes that line twice | Live: undo after two braced lines raises `ESynEditStringList: Invalid stringlist index` (upstream `master`, every build). This is the one test upstream's own menu ran, `TestEditor`; the folds had nothing to do with it | test: the test switch; narrowed by cut-down runs and the undo list's records | `f75118a`, `36475ff` |
+| 30 | `SynHighlighterCpp.InitIdent` | The keyword table was regenerated (91 keywords, hash mod 331) but `FuncAsm` still sits on the old table's slots 70, 191 and 189, now empty, and the function table kept the old size (343), so it reads past `KeyIndices` | Live: an identifier hashing there (`df`, `mo`, `eeee`: 165 of the 18,278 of one to three letters) calls `FuncAsm(-1)` and reads `KeyWords[-1]`. That's garbage on Win32 and **an access violation on Win64 while typing**. `asm` itself (slot 250) never got `FuncAsm` | test: the test switch, once #29 was fixed; the stack from its exact Win64 unwind | `f4eb82f`, `588493d` |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
@@ -112,7 +113,7 @@ arm is now written (*Delf*; `dev64` states it too).
 GCC's 3,137 files). The class browser tokenizes the preprocessor's output, not raw headers, so
 whether it bites there is unchecked.
 
-**Tally so far:** Claude 23 (one suspected), dcc64 2, test 2, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 23 (one suspected), dcc64 2, test 3, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Tests (delfcpp-tests)
@@ -131,7 +132,10 @@ each as a copy beside the installed Dev-C++ with a copy of an existing config. T
 `editor,editorlist`: `actions` opens every dialog, and `compileroptions` deletes and saves the
 compiler sets. 18 Nov: upstream `master` (Win32, plus error 28's build fix only), `dev64` Win32
 and Win64, and Delf Win64 all give the same result. `TestEditor` fails (error 29) and
-`TestEditorList` fails (error 14).
+`TestEditorList` fails (error 14). After errors 29 and 30 were fixed, `TestEditor` **passes** on
+`dev64` (Win32, Win64) and Delf (Win64); `TestEditorList` still fails at its stale check.
+A failure gives its code address and stack (exact on Win64), and `delfcpp-tools\mapaddr.ps1`
+names them from the build's `.map` (`build_dev64.bat` now writes one, with line numbers).
 
 | Error | Pinned by (Regression tests; the original fails them) |
 |---|---|
@@ -144,7 +148,7 @@ and Win64, and Delf Win64 all give the same result. `TestEditor` fails (error 29
 | 15 | Instances: ReadsOnlyCbData (the original returned memory past the message as a file name) |
 | 19 | Utils: SetPathLongPath, CrashesOriginal (the original dies: access violation or stack overflow) |
 | 21-23 | CppTokenizer: DoesNotReadPastTheEnd, seven cases |
-| 29 | The test switch: `TestEditor` (the original fails it too) |
+| 29, 30 | The test switch: `TestEditor` (the original fails it at #29; past that, Win64 builds crashed at #30) |
 | not yet | 3 (editors in Tag: needs real editors; the in-app Tests.pas, which runs now but stops before it gets there), 4 (passes: the port fixed it before the tests' original), 5-7 and 16-18 (window, process and handle calls), 13 (suspected), 20 (Packman), 24 (private, unused) |
 
 ## Fixes (beyond the errors)
@@ -280,3 +284,11 @@ Updated as units land; the short version of what this project shows.
   dialog after a failed test (fixed: the editors are discarded) and, for upstream's build, on
   error 28's dialog, which the user saw on screen. The one test upstream's menu ran,
   `TestEditor`, **fails on upstream itself**: undo after the fold steps raises (error 29).
+- **18 Nov 2026.** Error 29 chased (the user's pick). Cut-down runs showed typing braces and
+  undoing was enough. The undo list's records showed each auto-indented Enter recorded twice,
+  and SynEdit's Enter code showed why. Fixed in two lines; `TestEditor` then ran further and
+  crashed on Win64 only. The switch's stack (exact on Win64) went straight to the C++
+  highlighter: a regenerated keyword table with three stale slots, so typing `df` or `mo` read
+  before an array (error 30). Both fixed on both branches; `TestEditor` passes everywhere.
+  Range checks (`{$R+}`) would have stopped #30 at the read on Win32 too: a test build with
+  checks on is worth having.

@@ -299,3 +299,8 @@ Updated as units land; the short version of what this project shows.
   reports rather than assume, `TestUndo` replays them as described. Upstream fails at #146, the
   exact report. With #29 fixed, the redo reports still failed: two more bugs (31, 32), both
   fixed. `TestUndo` passes on `dev64` Win32 and Win64 and on Delf Win64.
+- **18 Nov 2026, upstream.** The three undo/redo fixes (29, 31, 32) put on upstream's latest
+  `master` as branch `fix-undo-autoindent` in the fork (no Win64, no project markers), tested
+  there (`TestEditor` and `TestUndo` pass on Win32, with the test switch applied only for the
+  run), pushed, and a PR to Embarcadero/Dev-Cpp opened in the browser for the user to submit.
+  Error 30 (the highlighter) is held back for its own issue.

@@ -12,7 +12,8 @@ words included); Delf's `docs/devcpp-delf-todo.md` (ideas to follow up).
 
 | What | Where |
 |---|---|
-| Dev-C++ fork, branch `delf-units` | `C:\Users\User\Documents\GitHub2\Dev-Cpp` |
+| Upstream Win32, `master` (the main checkout; Delf's corpus survey reads it) | `C:\Users\User\Documents\GitHub2\Dev-Cpp` |
+| Branch `delf-units` (git worktree) | `C:\Users\User\Documents\GitHub2\Dev-Cpp-delf` |
 | Branch `dev64` (git worktree of the same repo) | `C:\Users\User\Documents\GitHub2\Dev-Cpp-dev64` |
 | Delf (private repo; delfc, SPEC, docs) | `D:\Users\Perseus\Documents\Embarcadero\Studio\Projects\_CLAUDE\Delf` |
 | delfc | `Delf\poc`, run as `python -m delfc file.delf -U <unit dirs> --ns <scopes> --check` |

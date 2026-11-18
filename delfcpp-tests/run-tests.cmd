@@ -6,7 +6,7 @@ rem              master). Win64: upstream doesn't compile for Win64, so upstream
 rem              Win64 port's changes (ORIGINAL_REF64, default dcef9cf).
 rem   dev64    : the dev64 checkout's plain Delphi
 rem   delf     : the delf-units checkout's units (delfc's .pas output of each .delf)
-rem The two checkouts sit side by side: ..\..\Dev-Cpp (delf-units) and ..\..\Dev-Cpp-dev64.
+rem The two checkouts sit side by side: ..\..\Dev-Cpp-delf (delf-units) and ..\..\Dev-Cpp-dev64.
 rem Usage: run-tests.cmd [original|dev64|delf|all]   (default all). Exit 1 if a run failed;
 rem the original is expected to fail its Regression tests.
 setlocal enabledelayedexpansion
@@ -14,7 +14,7 @@ call "C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\rsvars.bat" >nul
 set "HERE=%~dp0"
 set "HERE=%HERE:~0,-1%"
 for %%R in ("%HERE%\..\..") do set "ROOT=%%~fR"
-set "DELF=%ROOT%\Dev-Cpp"
+set "DELF=%ROOT%\Dev-Cpp-delf"
 set "DEV64=%ROOT%\Dev-Cpp-dev64"
 if not defined ORIGINAL_REF32 set ORIGINAL_REF32=master
 if not defined ORIGINAL_REF64 set ORIGINAL_REF64=dcef9cf

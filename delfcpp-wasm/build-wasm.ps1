@@ -10,8 +10,8 @@ param(
 )
 $ErrorActionPreference = 'Continue'
 $Here  = $PSScriptRoot
-$Root  = (Resolve-Path "$Here\..\..").Path            # holds Dev-Cpp and Dev-Cpp-dev64
-$Delf  = "$Root\Dev-Cpp"; $Dev64 = "$Root\Dev-Cpp-dev64"
+$Root  = (Resolve-Path "$Here\..\..").Path            # holds Dev-Cpp-delf and Dev-Cpp-dev64
+$Delf  = "$Root\Dev-Cpp-delf"; $Dev64 = "$Root\Dev-Cpp-dev64"
 $PPC   = "$Work\fpcsrc\compiler\ppcrosswasm32.exe"
 $S     = "$Fpc\fpcsrc"
 $Units = 'cbutils', 'CharUtils', 'StatementList', 'IntList', 'CppTokenizer', 'CppPreprocessor', 'CppParser'

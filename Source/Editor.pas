@@ -2227,30 +2227,46 @@ begin
       until (BackCounter = 0) or (Temp <> '');
     end;
 
-    inherited;
+    // DelfCpp: one undo step for the Enter and the extra indent below, which is now recorded.
+    // It was written straight into Lines, so undo and redo didn't know it: redo left the
+    // tabs behind (Embarcadero/Dev-Cpp #192, #252, #273)
+    UndoList.BeginBlock;
+    try
+      inherited;
 
-    var Attr: TSynHighlighterAttributes;
-    if GetHighlighterAttriAtRowCol(BufferCoord(Length(Temp), CaretY - 1), Temp, Attr) then begin // only add indent to source files
-      if Attr <> Highlighter.CommentAttribute then begin // and outside of comments
-        if CharInSet(Temp[Length(Temp)], ['{', ':']) then begin // add more indent for these too
-          if not (eoTabsToSpaces in Options) then begin
-            Lines[CaretY - 1] := Lines[CaretY - 1] + #9;
-            Inc(SpaceCount2, 1);
-          end else begin
-            Lines[CaretY - 1] := Lines[CaretY - 1] + StringOfChar(' ', TabWidth);
-            Inc(SpaceCount2, TabWidth); // update caret counter
+      var Attr: TSynHighlighterAttributes;
+      if GetHighlighterAttriAtRowCol(BufferCoord(Length(Temp), CaretY - 1), Temp, Attr) then begin // only add indent to source files
+        if Attr <> Highlighter.CommentAttribute then begin // and outside of comments
+          if CharInSet(Temp[Length(Temp)], ['{', ':']) then begin // add more indent for these too
+            var Extra: String;
+            if not (eoTabsToSpaces in Options) then begin
+              Extra := #9;
+              Inc(SpaceCount2, 1);
+            end else begin
+              Extra := StringOfChar(' ', TabWidth);
+              Inc(SpaceCount2, TabWidth); // update caret counter
+            end;
+            var At := BufferCoord(Length(Lines[CaretY - 1]) + 1, CaretY);
+            Lines[CaretY - 1] := Lines[CaretY - 1] + Extra;
+            UndoList.AddChange(crInsert, At, BufferCoord(At.Char + Length(Extra), CaretY), '', smNormal);
           end;
         end;
+        InternalCaretXY := BufferCoord(SpaceCount2 + 1, CaretY);
       end;
-      InternalCaretXY := BufferCoord(SpaceCount2 + 1, CaretY);
+    finally
+      UndoList.EndBlock;
     end;
     Exit;
   end;
 
-  if (Command = ecChar) and FeoAddIndent and CharInSet(AChar, ['}']) then
-            // Remove TabWidth of indent of the current line when typing a }
-    if TrimLeft(Lines[CaretY - 1]) = '' then begin
-    // and the first nonblank char is this new }
+  if (Command = ecChar) and FeoAddIndent and CharInSet(AChar, ['}']) and not ReadOnly
+    and (TrimLeft(Lines[CaretY - 1]) = '') then begin
+    // Remove TabWidth of indent of the current line when typing a }, the first nonblank char.
+    // DelfCpp: the removal is recorded, in one undo step with the }; it was written straight
+    // into Lines, so undo and redo put the indent back wrong (Embarcadero/Dev-Cpp #183, #252)
+    UndoList.BeginBlock;
+    try
+      var Old := Lines[CaretY - 1];
       var i := CaretX - 1;
       var SpaceCount1 := 0; // buffer character count
       var SpaceCount2 := 0; // display character count
@@ -2265,8 +2281,16 @@ begin
         Dec(i);
       end;
       Lines[CaretY - 1] := Copy(Lines[CaretY - 1], 1, i);
+      if Length(Old) > i then
+        UndoList.AddChange(crDelete, BufferCoord(i + 1, CaretY), BufferCoord(Length(Old) + 1, CaretY),
+          Copy(Old, i + 1, MaxInt), smNormal);
       InternalCaretXY := BufferCoord(CaretX - SpaceCount1, CaretY);
+      inherited;
+    finally
+      UndoList.EndBlock;
     end;
+    Exit;
+  end;
 
   inherited;
 end;

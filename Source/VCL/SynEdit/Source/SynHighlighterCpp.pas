@@ -88,7 +88,9 @@ type
     fRange: TRangeState;
     FTokenID: TtkTokenKind;
     FExtTokenID: TxtkTokenKind;
-    fIdentFuncTable: array[0..342] of TIdentFuncTableFunc;
+    // DelfCpp: one slot per KeyIndices entry (0..330, the keyword table in use); was 0..342,
+    // the old table's size, so InitIdent read past KeyIndices
+    fIdentFuncTable: array[0..330] of TIdentFuncTableFunc;
     fAsmAttri: TSynHighlighterAttributes;
     fCommentAttri: TSynHighlighterAttributes;
     fDirecAttri: TSynHighlighterAttributes;
@@ -439,9 +441,14 @@ begin
     if KeyIndices[i] = -1 then
       fIdentFuncTable[i] := AltFunc;
 
-  fIdentFuncTable[70] := FuncAsm;
-  fIdentFuncTable[191] := FuncAsm;
-  fIdentFuncTable[189] := FuncAsm;
+  // DelfCpp: was fIdentFuncTable[70], [191] and [189] := FuncAsm, the old table's slots for
+  // __asm, _asm and asm. In this table they hold no keyword, so an identifier hashing there
+  // ("df", "mo", "eeee") called FuncAsm(-1) and read KeyWords[-1]: harmless garbage on Win32,
+  // an access violation on Win64 (Tests.TestEditor). asm's own slot (250) got KeyWordFunc.
+  // The slot is found from the tables, so a regenerated table can't leave it stale again.
+  for i := Low(KeyIndices) to High(KeyIndices) do
+    if (KeyIndices[i] >= 0) and (KeyWords[KeyIndices[i]] = 'asm') then
+      fIdentFuncTable[i] := FuncAsm;
 
   {fIdentFuncTable[230] := FuncAlignas;
   fIdentFuncTable[295] := FuncAlignof;

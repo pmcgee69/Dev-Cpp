@@ -366,3 +366,29 @@ Updated as units land; the short version of what this project shows.
 
   `dev64` `ebdf1d0` (sampler, flow variants), `f0fafe5` (the fix); here `ef91420`, `a9a638a`.
   `undo`, `perf` pass; `editorlist` still error 14.
+- **19-20 Nov 2026, the style change by hand (tests 2-6).** Six recordings of the user's flow,
+  timed frame by frame with ffmpeg (scene-change scores at 30 fps), BEFORE and AFTER side by side.
+  - **Test 2** came out black (the recorder), but the event log had two crashes: the switch back
+    to Windows, upstream's Delphi 11+ access violation, which the user's own #370 fixes; then
+    Dev-C++'s exception dialog crashing in its raw stack walk (`ExceptionFrm.GetStackReport`),
+    named through a `.map`. The style fix was rebuilt on #370 (both change the same procedure),
+    and #370 added to `dev64` and here.
+  - **Test 3**: the window vanished, desktop showing, for ~0.5 s: `WM_SETREDRAW(False)` on a
+    top-level window hides it. Dropped. Also found: a build in a worktree under `.claude\jobs`
+    linked empty `icons.res`/`DefaultFiles.res` (the BEFORE copy was 156 KB short); built beside
+    the others since.
+  - **Test 4**: 2.0 → 1.3 s, no flip back to white, but VCL's own rebuild still showed (it holds
+    the form's redraw while recreating). The user, *"other apps don't act this way … hide the app
+    until the new style (not classic) is ready"*: **a cover**, a picture of the window in a plain
+    topmost popup while the style is applied, the posted rebuild taken and the window painted.
+  - **Test 5**: one step; 1.9 s (#370 alone) → 0.8 s. The cover costs ~0.1 s (perf V3).
+  - **Test 6**, upstream `master` against `latest` with everything: **2.9 s in five stages →
+    0.45 s in one step**; `master` crashed switching back (#370's bug), `latest` didn't; closing,
+    2.0 → 0.17 s (save fix, #369).
+  - The user's idea of switching to Classic before exit: on 10.4 that is the Runtime error 216
+    #369 avoids; on 11+ #369 drops the switch altogether. Hiding early would help; not done.
+  - Pushed: `fix-style-switch-speed` (`e3cd57e` #370, `b26196d`, `98e0920`) and `latest`
+    (`7bf4f2d`; one conflict, `EnviroFrm.pas`, resolved with the user). Drafts in Delf:
+    `devcpp-pr-style.md`, and `devcpp-pr-inisave.md` retitled: a pair, "Speed: …", each linking
+    the other. Here `7019dcb` (redraw hold dropped), `d6ab104` (#370), `b666251` (the cover);
+    `dev64` `45c4e96`, `4385f4b`, `4cca98d`. All three builds pass `editor`, `undo`, `perf`.

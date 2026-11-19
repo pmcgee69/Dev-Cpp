@@ -3517,7 +3517,9 @@ begin
       dmMain.RebuildMRU;
     end;
   finally
-    Close;
+    // Freed now, not Close (caFree only queues a Release): a new style rebuilds the windows of
+    // every form still alive, hidden ones included
+    Free;
   end;
       //Load Delphi Style
       if devData.StyleChange then

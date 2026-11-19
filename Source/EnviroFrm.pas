@@ -203,10 +203,10 @@ begin
     InterfaceFontSize := StrToIntDef(cbUIfontsize.Text, 9);
 
     //Set Delphi Style
+    // Applied by MainForm.actEnviroOptionsExecute once this dialog is gone: set here, while the
+    // dialog is still up, every window of it was rebuilt for the new style just before it closed
     StyleChange := ListBoxStyle.ItemIndex <> devData.Style;
     Style := ListBoxStyle.ItemIndex;
-    if Style > 0 then
-      TStyleManager.TrySetStyle(cDelphiStyle[Style]);
   end;
 
   MainForm.Font.Name := devData.InterfaceFont;

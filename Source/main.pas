@@ -1008,7 +1008,7 @@ uses
   DataFrm, NewProjectFrm, AboutFrm, PrintFrm,
   CompOptionsFrm, EditorOptFrm, IncrementalFrm, EnviroFrm,
   SynEdit, ImageTheme, SynEditKeyCmds, Instances,
-  Types, FindFrm, ProjectTypes, devExec, Tests,
+  Types, FindFrm, ProjectTypes, devExec, Tests, Winapi.DwmApi,
   NewTemplateFrm, FunctionSearchFrm, NewFunctionFrm, NewVarFrm, NewClassFrm,
   ProfileAnalysisFrm, FilePropertiesFrm, AddToDoFrm, ViewToDoFrm,
   ImportMSVCFrm, ImportCBFrm, CPUFrm, FileAssocs, TipOfTheDayFrm,
@@ -3545,12 +3545,77 @@ begin
   ApplyStyleChange;
 end;
 
+// A picture of the window as it looks now, in a plain window of its own exactly over it (topmost,
+// no taskbar button, never activated). Returns the cover, 0 if it couldn't be made; the bitmap is
+// freed with it (RemoveStyleCover).
+function ShowStyleCover(Form: TForm; out Bitmap: HBITMAP): HWND;
+const
+  DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+var
+  R: TRect;
+  ScreenDC, MemDC: HDC;
+  Old: HGDIOBJ;
+begin
+  Result := 0;
+  Bitmap := 0;
+  // the frame as drawn: GetWindowRect also counts Windows 10's invisible resize borders
+  if DwmGetWindowAttribute(Form.Handle, DWMWA_EXTENDED_FRAME_BOUNDS, @R, SizeOf(R)) <> S_OK then
+    GetWindowRect(Form.Handle, R);
+  if R.IsEmpty then
+    Exit;
+  ScreenDC := GetDC(0);
+  try
+    MemDC := CreateCompatibleDC(ScreenDC);
+    Bitmap := CreateCompatibleBitmap(ScreenDC, R.Width, R.Height);
+    Old := SelectObject(MemDC, Bitmap);
+    BitBlt(MemDC, 0, 0, R.Width, R.Height, ScreenDC, R.Left, R.Top, SRCCOPY);
+    SelectObject(MemDC, Old);
+    DeleteDC(MemDC);
+  finally
+    ReleaseDC(0, ScreenDC);
+  end;
+  Result := CreateWindowEx(WS_EX_TOOLWINDOW or WS_EX_TOPMOST or WS_EX_NOACTIVATE, 'STATIC', nil,
+    WS_POPUP or SS_BITMAP, R.Left, R.Top, R.Width, R.Height, 0, 0, HInstance, nil);
+  if Result = 0 then begin
+    DeleteObject(Bitmap);
+    Bitmap := 0;
+    Exit;
+  end;
+  SendMessage(Result, STM_SETIMAGE, IMAGE_BITMAP, LPARAM(Bitmap));
+  ShowWindow(Result, SW_SHOWNOACTIVATE);
+  UpdateWindow(Result);
+end;
+
+procedure RemoveStyleCover(Cover: HWND; Bitmap: HBITMAP);
+begin
+  if Cover <> 0 then
+    DestroyWindow(Cover);
+  if Bitmap <> 0 then
+    DeleteObject(Bitmap);
+end;
+
 procedure TMainForm.ApplyStyleChange;
+var
+  Cover: HWND;
+  CoverBitmap: HBITMAP;
 begin
   if devData.Style > 0 then
   begin
-    LoadThemeStyle;
-    LoadStyle;
+    // VCL rebuilds every window for a new style, and the window showed each stage (blank, half
+    // restyled, white placeholder blocks). Covered by a picture of itself until the new style is
+    // applied and painted, the window changes in one step. (Not for the classic style: that
+    // switch is quick.)
+    Cover := ShowStyleCover(Self, CoverBitmap);
+    try
+      LoadThemeStyle;
+      LoadStyle;
+      // The style's rebuild of this window is posted (the window is visible): take it now, then
+      // paint what is still unpainted, so the cover comes off a finished window
+      Application.ProcessMessages;
+      RedrawWindow(Handle, nil, 0, RDW_UPDATENOW or RDW_ALLCHILDREN);
+    finally
+      RemoveStyleCover(Cover, CoverBitmap);
+    end;
   end
   else
     Loadtheme;

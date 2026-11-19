@@ -3556,16 +3556,8 @@ begin
       begin
         if devData.Style > 0 then
         begin
-          // DelfCpp: the icons and the style together, then one repaint (the perf test: 15-25%
-          // faster than the dialog setting the style and this the icons after)
-          SendMessage(Handle, WM_SETREDRAW, WPARAM(False), 0);
-          try
-            LoadThemeStyle;
-            LoadStyle;
-          finally
-            SendMessage(Handle, WM_SETREDRAW, WPARAM(True), 0);
-          end;
-          RedrawWindow(Handle, nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_FRAME or RDW_ALLCHILDREN);
+          LoadThemeStyle;
+          LoadStyle;
         end
         else
           Loadtheme;

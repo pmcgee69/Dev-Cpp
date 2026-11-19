@@ -337,3 +337,32 @@ Updated as units land; the short version of what this project shows.
   on both; `editorlist` still fails at error 14's stale focus check. A lesson: my `sed -i` under
   Git Bash turned `Tests.pas` CRLF to LF (a 1,800-line diff); caught in the commit stat, the
   commits redone. Text edits with the Edit tool, as the rule says.
+- **19 Nov 2026, upstream and the style change.** The save fix went upstream (the user: *"yes
+  put the save fix upstream, then style change"*): branch `fix-ini-save` (`99a7a28`) off
+  upstream `master`, no project markers; upstream itself closed in ~2.0 s, ~0.4 s with it, the
+  same `devcpp.ini` (checked from outside, by timing WM_CLOSE to exit, since upstream has no test
+  switch). Pushed, merged into `latest` (`1243328`), PR draft `devcpp-pr-inisave.md` in Delf.
+  (`latest` built with Delphi 13 still needs error 28's `.inc` swapped in for the build: the
+  first try showed the user the *SVGImageListMenuStyle.Scaled* dialog.)
+  - **A sampling profiler** in the test switch (Win64): a thread suspends the main thread about
+    once a millisecond, unwinds its stack with `RtlVirtualUnwind` (Delphi's Win64 code has
+    `.pdata`), resumes it; `delfcpp-tools\profile.ps1` names the frames from the `.map`. On the
+    style change: 87% of samples inside `win32u.dll` (windows and drawing in the kernel), asked
+    for by VCL rebuilding every window (`CM_RECREATEWND`, 32%), the toolbars' style backgrounds
+    (~25%), the form's shaped region (13%), the icons (11%).
+  - **Why every window**: `TStyleManager.SetStyle` sends `CM_CUSTOMSTYLECHANGED` to every live
+    form, hidden ones synchronously, and each recreates its whole window tree. Dev-C++ set the
+    style in Environment Options' OK, while the dialog was up (its windows rebuilt just before it
+    closed), then the main form swapped the icons afterwards (toolbars and menus rebuilt again:
+    the painting in pieces). Now: the dialog records the choice and is freed, the main form
+    applies icons and style under one `WM_SETREDRAW` and repaints once; the toolbars' icon copy is
+    made once (its `Assign` re-parsed every SVG on every switch). The perf test, the user's flow:
+    **Win64 635 → 480 ms, Win32 830 → 600 ms**.
+  - Tried and dropped: holding the SVG lists in `BeginUpdate` so each renders once. No gain;
+    they weren't rendering twice. The first switch in a session still costs more (Win32 0.8-1.1 s
+    for the icons alone: the SVGs' first render and the toolbars' first layout at the new size).
+  - The VCL style engine's own cost (recreating every window, drawing each control's skin) stays:
+    ~450 ms of the ~500. Fewer windows, or no runtime switch, are the only levers left there.
+
+  `dev64` `ebdf1d0` (sampler, flow variants), `f0fafe5` (the fix); here `ef91420`, `a9a638a`.
+  `undo`, `perf` pass; `editorlist` still error 14.

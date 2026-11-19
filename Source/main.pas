@@ -961,8 +961,6 @@ type
     procedure UpdateClassBrowsing;
     function ParseParameters(const Parameters: WideString): Integer;
     //procedure Delphi Style
-    procedure LoadStyle;
-    procedure LoadThemeStyle;
     procedure LoadTheme;
 
     //Procedure New Screen
@@ -1001,6 +999,8 @@ type
     procedure ToolbarGripMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure ToolbarGripMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   public
+    procedure LoadStyle; // public for Tests.TestPerf
+    procedure LoadThemeStyle;
     procedure CloseTabProc(Sender: TObject);
     procedure ScanActiveProject;
     procedure UpdateCompilerList;

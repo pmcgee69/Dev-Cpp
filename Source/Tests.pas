@@ -31,10 +31,14 @@ type
   TTestClass = class
   private
     fLastError: String;
+    fNotes: TStringList;
     procedure ShowUpdate(Delay: Integer);
     function Failed(E: Exception): Boolean;
   public
     constructor Create;
+    destructor Destroy; override;
+    // lines a test reports even when it passes (the perf test's timings)
+    property Notes: TStringList read fNotes;
     // why the last test returned False: the exception, often "Assertion failed (…Tests.pas, line N)"
     property LastError: String read fLastError;
     function TestEditor: Boolean;
@@ -43,6 +47,7 @@ type
     function TestCompilerOptions: Boolean;
     function TestAll: Boolean;
     function TestUndo: Boolean; // DelfCpp: the undo reports upstream (errors 29, 30)
+    function TestPerf: Boolean; // DelfCpp: times what the user found slow; reports, never fails
   end;
 
 // The test switch: devcpp.exe -runtests <file> [-tests <names>] runs the named tests (default
@@ -57,7 +62,8 @@ implementation
 
 uses
   Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils,
-  System.TypInfo, SynEditTextBuffer;
+  System.TypInfo, SynEditTextBuffer, Vcl.Themes, EditorOptFrm, EnviroFrm, DataFrm, devCFG,
+  FileAssocs, ShlObj;
 
 function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
 begin
@@ -76,6 +82,7 @@ begin
     if Name = 'editor' then Result := Test.TestEditor
     else if Name = 'editorlist' then Result := Test.TestEditorList
     else if Name = 'undo' then Result := Test.TestUndo
+    else if Name = 'perf' then Result := Test.TestPerf
     else if Name = 'actions' then Result := Test.TestActions
     else Result := Test.TestCompilerOptions;
   except
@@ -102,8 +109,17 @@ begin
   try
     Lines.Add(Format('Dev-C++ %s, %d-bit, %s', [DEVCPP_VERSION, SizeOf(Pointer) * 8,
       FormatDateTime('yyyy-mm-dd hh:nn:ss', Now)]));
+    // startup: from the process's creation to here (the window up, the first idle)
+    var Created, ExitT, KernelT, UserT: TFileTime;
+    var NowFT: TFileTime;
+    if GetProcessTimes(GetCurrentProcess, Created, ExitT, KernelT, UserT) then begin
+      GetSystemTimeAsFileTime(NowFT);
+      Lines.Add(Format('NOTE startup to tests %d ms (CPU %d ms)', [
+        (Int64(NowFT) - Int64(Created)) div 10000, (Int64(KernelT) + Int64(UserT)) div 10000]));
+    end;
     for Name in SplitString(LowerCase(Selection), ',') do begin
-      if not MatchStr(Name, ['editor', 'editorlist', 'undo', 'actions', 'compileroptions']) then begin
+      Test.Notes.Clear;
+      if not MatchStr(Name, ['editor', 'editorlist', 'undo', 'perf', 'actions', 'compileroptions']) then begin
         Lines.Add('UNKNOWN ' + Name);
         Inc(Failures);
         Continue;
@@ -116,6 +132,8 @@ begin
         Lines.Add(Format('FAIL %s (%.2f s): %s', [Name, Watch.Elapsed.TotalSeconds, Test.LastError]));
         Inc(Failures);
       end;
+      for var Note in Test.Notes do
+        Lines.Add('  ' + Note);
       // A failed test leaves its editors open, modified: closing them would ask to save (and
       // the unattended run would wait on the dialog). Discard them; the next test starts clean.
       if MainForm.EditorList.PageCount > 0 then begin
@@ -851,6 +869,136 @@ end;
 
 constructor TTestClass.Create;
 begin
+  fNotes := TStringList.Create;
+end;
+
+destructor TTestClass.Destroy;
+begin
+  fNotes.Free;
+  inherited;
+end;
+
+// Times what the user found slow by hand (18-19 Nov video): closing Editor Options, changing the
+// style, and the Environment Options OK. Each step runs Runs times; the note gives every time in
+// ms. A full synchronous repaint of the main window follows each step, inside its time, since
+// the user waits for the paint, not the call.
+function TTestClass.TestPerf: Boolean;
+const
+  Runs = 3;
+var
+  SW: TStopwatch;
+  Times: String;
+
+  procedure PaintNow;
+  begin
+    RedrawWindow(MainForm.Handle, nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_FRAME or
+      RDW_ALLCHILDREN or RDW_UPDATENOW);
+  end;
+
+  procedure Lap;
+  begin
+    Times := Times + Format(' %d', [SW.ElapsedMilliseconds]);
+    SW := TStopwatch.StartNew;
+  end;
+
+  procedure Note(const What: String);
+  begin
+    fNotes.Add(Format('%-34s ms:%s', [What, Times]));
+    Times := '';
+  end;
+
+var
+  e: TEditor;
+  F: TEditorOptForm;
+  Env: TEnviroForm;
+  I, Run, OldStyle, DarkStyle: Integer;
+  Src: TStringList;
+begin
+  Result := True;
+  try
+    // an editor with something to paint
+    MainForm.actNewSource.Execute;
+    e := MainForm.EditorList.GetEditor;
+    Src := TStringList.Create;
+    try
+      for I := 1 to 60 do
+        Src.Add(Format('int f%d(int a) { return a * %d; } // line %d', [I, I, I]));
+      e.Text.Lines.Assign(Src);
+    finally
+      Src.Free;
+    end;
+    ShowUpdate(0);
+
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin PaintNow; Lap; end;
+    Note('repaint only (baseline)');
+
+    // Editor Options, the parts of opening and OK, then what main does after ShowModal
+    for Run := 1 to Runs do begin
+      SW := TStopwatch.StartNew;
+      F := TEditorOptForm.Create(nil);
+      try
+        Times := Times + Format(' create %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+        F.btnOkClick(nil);
+        Times := Times + Format('/ok %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+        dmMain.UpdateHighlighter;
+        for I := 0 to MainForm.EditorList.PageCount - 1 do begin
+          devEditor.AssignEditor(MainForm.EditorList[I].Text, MainForm.EditorList[I].FileName);
+          MainForm.EditorList[I].InitCompletion;
+        end;
+        PaintNow;
+        Times := Times + Format('/apply %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+      finally
+        F.Free;
+      end;
+      Times := Times + Format('/free %d', [SW.ElapsedMilliseconds]);
+    end;
+    Note('Editor Options create/ok/apply/free');
+
+    // style change: what main does after the Environment Options OK, there and back
+    OldStyle := devData.Style;
+    if OldStyle = 4 then DarkStyle := 3 else DarkStyle := 4; // Windows10 BlackPearl
+    for Run := 1 to Runs do
+      for var Target in [DarkStyle, OldStyle] do begin
+        devData.Style := Target;
+        SW := TStopwatch.StartNew;
+        if Target > 0 then begin
+          TStyleManager.TrySetStyle(cDelphiStyle[Target]);
+          Times := Times + Format(' %d:set %d', [Target, SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+          MainForm.LoadThemeStyle;
+          Times := Times + Format('/icons %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+          MainForm.LoadStyle;
+        end else
+          TStyleManager.TrySetStyle(cDelphiStyle[0]);
+        Application.ProcessMessages;
+        PaintNow;
+        Times := Times + Format('/paint %d', [SW.ElapsedMilliseconds]);
+      end;
+    devData.Style := OldStyle;
+    Note('style set/icons/paint');
+
+    // Environment Options: create and free, and the file-association broadcasts its OK sends
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin
+      Env := TEnviroForm.Create(nil);
+      Env.Free;
+      Lap;
+    end;
+    Note('Environment Options create+free');
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin
+      for I := 1 to AssociationsCount do
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil); // FileAssocs.RefreshIcons: Associate/Unassociate send one each
+      Lap;
+    end;
+    Note(Format('OK''s %d association broadcasts', [AssociationsCount]));
+
+    e.Text.Modified := False;
+    MainForm.EditorList.CloseAll;
+  except
+    on E: Exception do
+      Result := Failed(E);
+  end;
 end;
 
 end.

@@ -5,6 +5,12 @@ type system; delfc translates `.delf` to `.pas`). Kept as it happens: what was c
 was found, what it cost, and **what found each bug** (Claude reading the code, a Delf rule,
 the Delphi compiler, or a test), so the log can say honestly what Delf itself contributed.
 
+**One of two journals** (the user, 20 Nov 2026: every session is to know both). This one is
+DelfCpp's: the Dev-C++ fork (`dev64`, `delfcpp-units`), its units, errors, tests and upstream
+PRs. The Delf repo's `docs/lifetime-diagnostics-record.md` is Delf's own process record (delfc,
+its experiments, and Dev-C++ as delfc's real code). A milestone goes in whichever it belongs to;
+one that is both goes in both, each pointing at the other.
+
 ## Principles (the user, 18 Nov 2026)
 
 - **One unit at a time, stacked.** Each unit is rewritten, checked and in use before the next.
@@ -392,3 +398,21 @@ Updated as units land; the short version of what this project shows.
     `devcpp-pr-style.md`, and `devcpp-pr-inisave.md` retitled: a pair, "Speed: …", each linking
     the other. Here `7019dcb` (redraw hold dropped), `d6ab104` (#370), `b666251` (the cover);
     `dev64` `45c4e96`, `4385f4b`, `4cca98d`. All three builds pass `editor`, `undo`, `perf`.
+- **20 Nov 2026, the test switch for the original, and in `latest`.** The user: *"add the change
+  to latest and a branch of original, so we can see what they would have said about the open
+  issues on github"*. Branch `test-switch` (`c636656`) off upstream `master`: the switch
+  (`0119e98`'s `main.pas` hooks) and this `Tests.pas` (`undo`, `perf`, the sampler), without the
+  perf test's user-flow variants (they imitate fixes, meaningless on the original). Merged into
+  `latest` (`a0d6c7d`) without a conflict; both pushed. Not a PR (for now).
+  - **The original against `latest`** (Win32, same config): `editor` FAIL → PASS (*Invalid
+    stringlist index 39* on undo: #183, #223); `undo` FAIL at #146 → PASS; `editorlist` FAIL on
+    both (error 14, the test's own stale focus check); `perf`'s Editor Options OK 1,610-1,630 ms
+    → 46-51 ms. The reports, confirmed on the code they were made against.
+  - **Two of upstream's tests need a person**: `compileroptions` clicks buttons that ask for a
+    confirmation or a name (it hung both builds 300 s), and `actions` runs every action, every
+    modal dialog, and would reach Environment Options' re-registering of file associations.
+    Unattended, they need the harness to answer dialogs.
+  - The save PR's page was opened in the browser from the draft (GitHub's compare URL with title
+    and body; `gh --web` hadn't opened one); the PR not created yet. Next: its number into the
+    style PR.
+  - `delfcpp-units` pushed to the fork for the first time, with this entry.

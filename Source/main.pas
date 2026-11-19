@@ -948,8 +948,6 @@ type
     procedure UpdateClassBrowsing;
     function ParseParameters(const Parameters: WideString): Integer;
     //procedure Delphi Style
-    procedure LoadStyle;
-    procedure LoadThemeStyle;
     procedure LoadTheme;
     procedure ApplyStyleChange;
     procedure ApplyStyleChangeOnIdle(Sender: TObject; var Done: Boolean);
@@ -972,6 +970,8 @@ type
     procedure PageControlCloseButtonMouseUp(Sender: TObject;
       Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   public
+    procedure LoadStyle; // public for Tests.TestPerf
+    procedure LoadThemeStyle;
     procedure CloseTabProc(Sender: TObject);
     procedure ScanActiveProject;
     procedure UpdateCompilerList;
@@ -6644,6 +6644,8 @@ end;
 procedure TMainForm.FormShow(Sender: TObject);
 var
   FileCount: Integer;
+  TestResultFile, TestSelection: String;
+  Testing: Boolean;
 begin
   if not fFirstShow then
     Exit;
@@ -6667,10 +6669,18 @@ begin
 
   // do not show tips if Dev-C++ is launched with a file and only slow
   // when the form shows for the first time, not when going fullscreen too
-  if devData.ShowTipsOnStart and (FileCount = 0) then
+  Testing := TestSwitchGiven(TestResultFile, TestSelection);
+  if devData.ShowTipsOnStart and (FileCount = 0) and not Testing then
     actShowTips.Execute;
 
   ResizeWelcomeComponent;
+
+  // The test switch: run once the window is up and the queue above has run, then close
+  if Testing then
+    TThread.ForceQueue(nil, procedure
+      begin
+        RunTestSwitch(TestResultFile, TestSelection);
+      end);
 end;
 
 procedure TMainForm.actSkipFunctionExecute(Sender: TObject);
@@ -7388,6 +7398,12 @@ begin
     if WideSameText(Item, 'portable') or WideSameText(Item, '-portable') then
     begin
       Inc(i);
+      Continue;
+    end;
+
+    // The test switch and its value (Tests.TestSwitchGiven)
+    if WideSameText(Item, '-runtests') or WideSameText(Item, '-tests') then begin
+      Inc(i, 2);
       Continue;
     end;
 

@@ -19,6 +19,8 @@
 
 unit Tests;
 
+{$ASSERTIONS ON} // the tests are their asserts, in a Release build too
+
 interface
 
 uses
@@ -28,25 +30,221 @@ uses
 type
   TTestClass = class
   private
+    fLastError: String;
+    fNotes: TStringList;
     procedure ShowUpdate(Delay: Integer);
+    function Failed(E: Exception): Boolean;
   public
     constructor Create;
+    destructor Destroy; override;
+    // lines a test reports even when it passes (the perf test's timings)
+    property Notes: TStringList read fNotes;
+    // why the last test returned False: the exception, often "Assertion failed (…Tests.pas, line N)"
+    property LastError: String read fLastError;
     function TestEditor: Boolean;
     function TestEditorList: Boolean;
     function TestActions: Boolean;
     function TestCompilerOptions: Boolean;
     function TestAll: Boolean;
+    function TestUndo: Boolean; // DelfCpp: the undo reports upstream (errors 29, 30)
+    function TestPerf: Boolean; // DelfCpp: times what the user found slow; reports, never fails
   end;
+
+// The test switch: devcpp.exe -runtests <file> [-tests <names>] runs the named tests (default
+// editor,editorlist,undo) once the main window is up, writes one line per test to <file> and a
+// summary, then closes Dev-C++ with exit code 0 (all passed) or 1. Names: editor, editorlist,
+// undo, actions (runs every enabled action, so dialogs open), compileroptions (deletes and re-finds
+// the compiler sets, and saves them). Use -c <folder> to keep the run off your own settings.
+function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
+procedure RunTestSwitch(const ResultFile, Selection: String);
 
 implementation
 
 uses
-  Main, EditorList, Editor, Version;
+  Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils,
+  System.TypInfo, SynEditTextBuffer, Vcl.Themes, EditorOptFrm, EnviroFrm, DataFrm, devCFG,
+  FileAssocs, ShlObj, System.Generics.Collections, Messages;
+
+function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
+begin
+  Result := FindCmdLineSwitch('runtests', ResultFile, True, [clstValueNextParam]);
+  if not FindCmdLineSwitch('tests', Selection, True, [clstValueNextParam]) then
+    Selection := 'editor,editorlist,undo';
+end;
+
+function CaptureRawStack(P: System.PExceptionRecord): Pointer; forward;
+function RawStackString(Info: Pointer): string; forward;
+procedure FreeRawStack(Info: Pointer); forward;
+
+function RunOne(Test: TTestClass; const Name: String): Boolean;
+begin
+  try
+    if Name = 'editor' then Result := Test.TestEditor
+    else if Name = 'editorlist' then Result := Test.TestEditorList
+    else if Name = 'undo' then Result := Test.TestUndo
+    else if Name = 'perf' then Result := Test.TestPerf
+    else if Name = 'actions' then Result := Test.TestActions
+    else Result := Test.TestCompilerOptions;
+  except
+    on E: Exception do
+      Result := Test.Failed(E); // a test's own handler should have caught it; record it anyway
+  end;
+end;
+
+procedure RunTestSwitch(const ResultFile, Selection: String);
+var
+  Lines: TStringList;
+  Name: String;
+  Passed, Failures: Integer;
+  Watch: TStopwatch;
+  Test: TTestClass;
+begin
+  Exception.GetExceptionStackInfoProc := CaptureRawStack;
+  Exception.GetStackInfoStringProc := RawStackString;
+  Exception.CleanUpStackInfoProc := FreeRawStack;
+  Lines := TStringList.Create;
+  Test := TTestClass.Create;
+  Passed := 0;
+  Failures := 0;
+  try
+    Lines.Add(Format('Dev-C++ %s, %d-bit, %s', [DEVCPP_VERSION, SizeOf(Pointer) * 8,
+      FormatDateTime('yyyy-mm-dd hh:nn:ss', Now)]));
+    // startup: from the process's creation to here (the window up, the first idle)
+    var Created, ExitT, KernelT, UserT: TFileTime;
+    var NowFT: TFileTime;
+    if GetProcessTimes(GetCurrentProcess, Created, ExitT, KernelT, UserT) then begin
+      GetSystemTimeAsFileTime(NowFT);
+      Lines.Add(Format('NOTE startup to tests %d ms (CPU %d ms)', [
+        (Int64(NowFT) - Int64(Created)) div 10000, (Int64(KernelT) + Int64(UserT)) div 10000]));
+    end;
+    for Name in SplitString(LowerCase(Selection), ',') do begin
+      Test.Notes.Clear;
+      if not MatchStr(Name, ['editor', 'editorlist', 'undo', 'perf', 'actions', 'compileroptions']) then begin
+        Lines.Add('UNKNOWN ' + Name);
+        Inc(Failures);
+        Continue;
+      end;
+      Watch := TStopwatch.StartNew;
+      if RunOne(Test, Name) then begin
+        Lines.Add(Format('PASS %s (%.2f s)', [Name, Watch.Elapsed.TotalSeconds]));
+        Inc(Passed);
+      end else begin
+        Lines.Add(Format('FAIL %s (%.2f s): %s', [Name, Watch.Elapsed.TotalSeconds, Test.LastError]));
+        Inc(Failures);
+      end;
+      for var Note in Test.Notes do
+        Lines.Add('  ' + Note);
+      // A failed test leaves its editors open, modified: closing them would ask to save (and
+      // the unattended run would wait on the dialog). Discard them; the next test starts clean.
+      if MainForm.EditorList.PageCount > 0 then begin
+        Lines.Add(Format('NOTE %s left %d editors open; closed unsaved', [Name, MainForm.EditorList.PageCount]));
+        for var I := 0 to MainForm.EditorList.PageCount - 1 do
+          MainForm.EditorList[I].Text.Modified := False;
+        MainForm.EditorList.CloseAll;
+      end;
+    end;
+    Lines.Add(Format('%d passed, %d failed', [Passed, Failures]));
+    Lines.WriteBOM := False;
+    Lines.SaveToFile(ResultFile, TEncoding.UTF8);
+  finally
+    Test.Free;
+    Lines.Free;
+  end;
+  if Failures > 0 then
+    ExitCode := 1
+  else
+    ExitCode := 0;
+  MainForm.Close;
+end;
 
 procedure TTestClass.ShowUpdate(Delay: Integer);
 begin
   Application.ProcessMessages;
   Sleep(Delay);
+end;
+
+// Under the test switch every exception records the code addresses on the stack when it's
+// raised: a raw scan (the return addresses, and some noise), as offsets from the start of the
+// code. delfcpp-tools\mapaddr.ps1 names them from a build's .map (DCC_MapFile=3).
+type
+  TRawStack = record
+    Count: Integer;
+    Addr: array[0..159] of NativeUInt; // Win64's exception dispatch alone fills the first 40 or so
+  end;
+  PRawStack = ^TRawStack;
+
+function CodeStart: NativeUInt;
+begin
+  Result := NativeUInt(HInstance) + $1000;
+end;
+
+{$IFDEF CPUX64}
+function RtlCaptureStackBackTrace(FramesToSkip, FramesToCapture: ULONG; BackTrace: Pointer;
+  BackTraceHash: PULONG): Word; stdcall; external kernel32;
+{$ENDIF}
+
+function CaptureRawStack(P: System.PExceptionRecord): Pointer;
+var
+  S: PRawStack;
+  Here: NativeUInt;
+  Q: PNativeUInt;
+  Top: NativeUInt;
+  Mbi: TMemoryBasicInformation;
+  I: Integer;
+begin
+  New(S);
+  S.Count := 0;
+  {$IFDEF CPUX64}
+  // Win64 unwinds exactly (through the exception dispatcher into the faulting frames): only
+  // the addresses in our code, so no noise
+  var Frames: array[0..159] of NativeUInt;
+  var N := RtlCaptureStackBackTrace(0, Length(Frames), @Frames, nil);
+  for I := 0 to N - 1 do
+    if (S.Count <= High(S.Addr)) and (Frames[I] > CodeStart) and (Frames[I] < CodeStart + $2000000) then begin
+      S.Addr[S.Count] := Frames[I] - CodeStart;
+      Inc(S.Count);
+    end;
+  Exit(S);
+  {$ENDIF}
+  Here := 0;
+  Q := @Here;
+  VirtualQuery(Q, Mbi, SizeOf(Mbi)); // the committed stack region we're in: read only within it
+  Top := NativeUInt(Mbi.BaseAddress) + Mbi.RegionSize;
+  for I := 0 to 8191 do begin // up to 32 or 64 KB of stack
+    if (S.Count > High(S.Addr)) or (NativeUInt(Q) + SizeOf(NativeUInt) > Top) then
+      Break;
+    if (Q^ > CodeStart) and (Q^ < CodeStart + $2000000) then begin // the code is under 32 MB
+      S.Addr[S.Count] := Q^ - CodeStart;
+      Inc(S.Count);
+    end;
+    Inc(Q);
+  end;
+  Result := S;
+end;
+
+function RawStackString(Info: Pointer): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  if Info <> nil then
+    for I := 0 to PRawStack(Info).Count - 1 do
+      Result := Result + Format('%x ', [PRawStack(Info).Addr[I]]);
+end;
+
+procedure FreeRawStack(Info: Pointer);
+begin
+  Dispose(PRawStack(Info));
+end;
+
+function TTestClass.Failed(E: Exception): Boolean;
+begin
+  // the step is the status bar message each test sets as it goes
+  fLastError := E.ClassName + ': ' + E.Message + ', at step "' + MainForm.Statusbar.Panels[2].Text + '"'
+    + Format(', raised at code offset %x', [NativeUInt(ExceptAddr) - CodeStart]);
+  if E.StackTrace <> '' then
+    fLastError := fLastError + ', stack: ' + E.StackTrace;
+  Result := False;
 end;
 
 function TTestClass.TestEditorList: Boolean;
@@ -254,7 +452,8 @@ begin
 
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
     //raise Exception.Create('TTestClass.TestEditorList');
   end;
 end;
@@ -273,7 +472,8 @@ begin
     end;
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 
@@ -320,7 +520,8 @@ begin
     end;
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 
@@ -547,7 +748,116 @@ begin
 
     Result := True;
   except
-    Result := False;
+    on E: Exception do
+      Result := Failed(E);
+  end;
+end;
+
+// DelfCpp: the cases people reported to Embarcadero/Dev-Cpp, as they describe them. Each fails
+// on upstream (error 29: Enter on an indented line was recorded twice for undo).
+function TTestClass.TestUndo: Boolean;
+const
+  // a small program, typed key by key: #10 is Enter, so auto-indent does the indenting
+  Program_ = 'int main()'#10'{'#10'int a[3] = {1, 2, 3};'#10'for (int i = 0; i < 3; i++) {'#10 +
+    'if (a[i] > 1) {'#10'a[i]--;'#10'}'#10'}'#10'return 0;'#10'}'#10;
+var
+  e: TEditor;
+  Cycle: Integer;
+  Before, Typed: String;
+
+  procedure TypeKeys(const Keys: String);
+  var
+    K: Integer;
+  begin
+    for K := 1 to Length(Keys) do
+      if Keys[K] = #10 then
+        e.Text.CommandProcessor(ecLineBreak, #0, nil)
+      else
+        e.Text.CommandProcessor(ecChar, Keys[K], nil);
+    ShowUpdate(0);
+  end;
+
+  function Records(List: TSynEditUndoList): String;
+  var
+    K: Integer;
+  begin
+    Result := '';
+    for K := 0 to List.ItemCount - 1 do
+      with List.Items[K] do
+        Result := Result + Format('%d %s (%d,%d)-(%d,%d) [%s] #%d'#13#10, [K,
+          GetEnumName(TypeInfo(TSynChangeReason), Ord(ChangeReason)), ChangeStartPos.Char,
+          ChangeStartPos.Line, ChangeEndPos.Char, ChangeEndPos.Line,
+          ChangeStr.Replace(#9, '\t').Replace(#13, '\r').Replace(#10, '\n'), ChangeNumber]);
+  end;
+
+  procedure UndoAll;
+  begin
+    while e.Text.UndoList.CanUndo do
+      e.Text.Undo;
+  end;
+
+  procedure RedoAll;
+  begin
+    while e.Text.RedoList.CanUndo do
+      e.Text.Redo;
+  end;
+
+begin
+  try
+    MainForm.actNewSource.Execute;
+    e := MainForm.EditorList.GetEditor;
+    e.Activate;
+
+    // #146 (and #129): "inserting a new line under the brackets and finally hitting CTRL-Z to
+    // undo [it] also deletes the line below the newly created line"
+    MainForm.SetStatusbarMessage('#146: Enter after an indented line, then one undo');
+    e.Text.Lines.Text := 'void f()'#13#10'{'#13#10#9'int a[3];'#13#10#9'int b;'#13#10'}';
+    e.Text.ClearUndo;
+    Before := e.Text.Lines.Text;
+    e.Text.CaretXY := BufferCoord(Length(e.Text.Lines[2]) + 1, 3); // the end of "<tab>int a[3];"
+    e.Text.CommandProcessor(ecLineBreak, #0, nil);
+    Assert(e.Text.Lines.Count = 6, 'Enter added a line');
+    e.Text.Undo;
+    Assert(e.Text.Lines.Text = Before, '#146: one undo of Enter changed other lines: ' +
+      IntToStr(e.Text.Lines.Count) + ' lines, was 5');
+
+    // #183, #234, #238, #338: typing with auto-indent, then Ctrl+Z repeatedly raised
+    // "Invalid stringlist index" and removed closing brackets
+    MainForm.SetStatusbarMessage('#183: type a program, undo everything');
+    e.Text.Lines.Clear;
+    e.Text.ClearUndo;
+    TypeKeys(Program_);
+    Typed := e.Text.Lines.Text;
+    var UndoRecords := Records(e.Text.UndoList);
+    UndoAll;
+    TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-records.txt'),
+      'undo list after typing:'#13#10 + UndoRecords + #13#10'redo list after undoing:'#13#10 + Records(e.Text.RedoList));
+    Assert(e.Text.Text.IsEmpty, '#183: not empty after undoing everything: ' + IntToStr(e.Text.Lines.Count) + ' lines');
+
+    // #192, #252, #273: undo and redo "again and again" deleted or changed code
+    for Cycle := 1 to 3 do begin
+      MainForm.SetStatusbarMessage(Format('#252: redo everything, cycle %d', [Cycle]));
+      RedoAll;
+      if e.Text.Lines.Text <> Typed then begin // keep both, to compare
+        TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-typed.txt'), Typed);
+        TFile.WriteAllText(TPath.Combine(TPath.GetTempPath, 'devcpp-undo-redone.txt'), e.Text.Lines.Text);
+      end;
+      Assert(e.Text.Lines.Text = Typed, Format('#252: redo cycle %d gave different text (both in %%TEMP%%\devcpp-undo-*.txt)', [Cycle]));
+      MainForm.SetStatusbarMessage(Format('#252: undo everything, cycle %d', [Cycle]));
+      UndoAll;
+      Assert(e.Text.Text.IsEmpty, Format('#252: undo cycle %d left text', [Cycle]));
+    end;
+
+    // error 30: identifiers that hashed to the highlighter's stale asm slots
+    MainForm.SetStatusbarMessage('error 30: identifiers df, ka, mo, eeee');
+    TypeKeys('int df, ka, mo, eeee;'#10);
+
+    e.Text.Modified := False;
+    MainForm.EditorList.CloseEditor(e);
+    Result := True;
+  except
+    on E: Exception do
+      Result := Failed(E);
   end;
 end;
 
@@ -557,8 +867,314 @@ begin
   Result := {TestEditorList and }TestEditor;
 end;
 
+{$IFDEF CPUX64}
+// A sampling profiler for the perf test: a thread that suspends the main thread about once a
+// millisecond, walks its stack with the system's unwinder (.pdata, which Delphi's Win64 code has
+// too) and resumes it. SaveTo writes one line per sample, innermost frame first: this exe's frames
+// as code offsets (as the test switch reports them; delfcpp-tools\profile.ps1 names them from the
+// .map), others as their module's name. While the main thread is suspended the sampler allocates
+// nothing and raises nothing (the main thread may hold the heap's lock): its buffer is
+// preallocated and every stack read is checked against the main thread's stack first.
+
+function RtlLookupFunctionEntry(ControlPc: UInt64; out ImageBase: UInt64;
+  HistoryTable: Pointer): Pointer; stdcall; external kernel32;
+function RtlVirtualUnwind(HandlerType: DWORD; ImageBase, ControlPc: UInt64; FunctionEntry: Pointer;
+  ContextRecord: PContext; out HandlerData: Pointer; out EstablisherFrame: UInt64;
+  ContextPointers: Pointer): Pointer; stdcall; external kernel32;
+function timeBeginPeriod(uPeriod: UINT): UINT; stdcall; external 'winmm.dll';
+function timeEndPeriod(uPeriod: UINT): UINT; stdcall; external 'winmm.dll';
+function GetModuleHandleEx(dwFlags: DWORD; lpModuleName: PChar; out phModule: HMODULE): BOOL;
+  stdcall; external kernel32 name 'GetModuleHandleExW';
+const
+  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT = 2;
+  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = 4;
+
+type
+  TStackSampler = class(TThread)
+  private const
+    MaxDepth = 64;
+  private
+    fTarget: THandle;
+    fStackLo, fStackHi: UInt64;  // the main thread's stack: its reservation
+    fBuf: TArray<UInt64>;        // per sample: the frame count, then the frames
+    fUsed: Integer;
+    fSamples: Integer;
+    fContextMem: Pointer;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create;          // call on the thread to sample
+    destructor Destroy; override;
+    procedure SaveTo(const FileName: String);
+    property Samples: Integer read fSamples;
+  end;
+
+constructor TStackSampler.Create;
+var
+  Here: Integer;
+  Info: TMemoryBasicInformation;
+begin
+  if not DuplicateHandle(GetCurrentProcess, GetCurrentThread, GetCurrentProcess, @fTarget,
+    0, False, DUPLICATE_SAME_ACCESS) then
+    RaiseLastOSError;
+  VirtualQuery(@Here, Info, SizeOf(Info));
+  fStackLo := UInt64(Info.AllocationBase);
+  fStackHi := UInt64(Info.BaseAddress) + Info.RegionSize;
+  SetLength(fBuf, 4 * 1024 * 1024); // 32 MB: about a minute of samples at full depth
+  GetMem(fContextMem, SizeOf(TContext) + 16);
+  inherited Create(False);
+  Priority := tpTimeCritical;
+end;
+
+destructor TStackSampler.Destroy;
+begin
+  inherited; // terminates and waits
+  FreeMem(fContextMem);
+  CloseHandle(fTarget);
+end;
+
+procedure TStackSampler.Execute;
+var
+  Ctx: PContext;
+  Start, N: Integer;
+  PC, Base, Frame: UInt64;
+  Entry, Handler: Pointer;
+begin
+  Ctx := PContext((NativeUInt(fContextMem) + 15) and not NativeUInt(15)); // CONTEXT is 16-aligned
+  timeBeginPeriod(1);
+  try
+    while not Terminated do begin
+      Sleep(1);
+      if fUsed + MaxDepth + 1 > Length(fBuf) then
+        Break;
+      if SuspendThread(fTarget) = DWORD(-1) then
+        Break;
+      try
+        FillChar(Ctx^, SizeOf(TContext), 0);
+        Ctx.ContextFlags := CONTEXT_FULL;
+        if GetThreadContext(fTarget, Ctx^) then begin
+          Start := fUsed;
+          Inc(fUsed);
+          N := 0;
+          while (N < MaxDepth) and (Ctx.Rip <> 0) and (Ctx.Rsp >= fStackLo) and (Ctx.Rsp + 8 <= fStackHi) do begin
+            PC := Ctx.Rip;
+            fBuf[fUsed] := PC;
+            Inc(fUsed);
+            Inc(N);
+            Entry := RtlLookupFunctionEntry(PC, Base, nil);
+            if Entry = nil then begin // a leaf function: its return address is at the top
+              Ctx.Rip := PUInt64(Ctx.Rsp)^;
+              Ctx.Rsp := Ctx.Rsp + 8;
+            end else
+              RtlVirtualUnwind(0, Base, PC, Entry, Ctx, Handler, Frame, nil);
+          end;
+          fBuf[Start] := N;
+          Inc(fSamples);
+        end;
+      finally
+        ResumeThread(fTarget);
+      end;
+    end;
+  finally
+    timeEndPeriod(1);
+  end;
+end;
+
+procedure TStackSampler.SaveTo(const FileName: String);
+var
+  Lines: TStringList;
+  Modules: TDictionary<HMODULE, String>;
+  I, K, N: Integer;
+  Line: String;
+  Addr: UInt64;
+  Module: HMODULE;
+  Name: array[0..MAX_PATH] of Char;
+  Code, CodeEnd: UInt64;
+begin
+  Code := CodeStart;
+  CodeEnd := UInt64(HInstance) + PImageNtHeaders(NativeUInt(HInstance) +
+    NativeUInt(PImageDosHeader(HInstance)._lfanew)).OptionalHeader.SizeOfImage;
+  Lines := TStringList.Create;
+  Modules := TDictionary<HMODULE, String>.Create;
+  try
+    I := 0;
+    while I < fUsed do begin
+      N := fBuf[I];
+      Line := '';
+      for K := 1 to N do begin
+        Addr := fBuf[I + K];
+        if (Addr >= Code) and (Addr < CodeEnd) then
+          Line := Line + Format(' %x', [Addr - Code])
+        else begin
+          Module := 0;
+          if not GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS or
+            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, PChar(Addr), Module) then
+            Module := 0;
+          if not Modules.ContainsKey(Module) then
+            if (Module <> 0) and (GetModuleFileName(Module, Name, Length(Name)) > 0) then
+              Modules.Add(Module, ExtractFileName(Name))
+            else
+              Modules.Add(Module, '?');
+          Line := Line + ' ' + Modules[Module];
+        end;
+      end;
+      Lines.Add(Trim(Line));
+      Inc(I, N + 1);
+    end;
+    Lines.SaveToFile(FileName, TEncoding.UTF8);
+  finally
+    Modules.Free;
+    Lines.Free;
+  end;
+end;
+{$ENDIF}
+
 constructor TTestClass.Create;
 begin
+  fNotes := TStringList.Create;
+end;
+
+destructor TTestClass.Destroy;
+begin
+  fNotes.Free;
+  inherited;
+end;
+
+// Times what the user found slow by hand (18-19 Nov video): closing Editor Options, changing the
+// style, and the Environment Options OK. Each step runs Runs times; the note gives every time in
+// ms. A full synchronous repaint of the main window follows each step, inside its time, since
+// the user waits for the paint, not the call.
+function TTestClass.TestPerf: Boolean;
+const
+  Runs = 3;
+var
+  SW: TStopwatch;
+  Times: String;
+
+  procedure PaintNow;
+  begin
+    RedrawWindow(MainForm.Handle, nil, 0, RDW_INVALIDATE or RDW_ERASE or RDW_FRAME or
+      RDW_ALLCHILDREN or RDW_UPDATENOW);
+  end;
+
+  procedure Lap;
+  begin
+    Times := Times + Format(' %d', [SW.ElapsedMilliseconds]);
+    SW := TStopwatch.StartNew;
+  end;
+
+  procedure Note(const What: String);
+  begin
+    fNotes.Add(Format('%-34s ms:%s', [What, Times]));
+    Times := '';
+  end;
+
+var
+  e: TEditor;
+  F: TEditorOptForm;
+  Env: TEnviroForm;
+  I, Run, OldStyle, DarkStyle: Integer;
+  Src: TStringList;
+begin
+  Result := True;
+  try
+    // an editor with something to paint
+    MainForm.actNewSource.Execute;
+    e := MainForm.EditorList.GetEditor;
+    Src := TStringList.Create;
+    try
+      for I := 1 to 60 do
+        Src.Add(Format('int f%d(int a) { return a * %d; } // line %d', [I, I, I]));
+      e.Text.Lines.Assign(Src);
+    finally
+      Src.Free;
+    end;
+    ShowUpdate(0);
+
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin PaintNow; Lap; end;
+    Note('repaint only (baseline)');
+
+    // Editor Options, the parts of opening and OK, then what main does after ShowModal
+    for Run := 1 to Runs do begin
+      SW := TStopwatch.StartNew;
+      F := TEditorOptForm.Create(nil);
+      try
+        Times := Times + Format(' create %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+        F.btnOkClick(nil);
+        Times := Times + Format('/ok %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+        dmMain.UpdateHighlighter;
+        for I := 0 to MainForm.EditorList.PageCount - 1 do begin
+          devEditor.AssignEditor(MainForm.EditorList[I].Text, MainForm.EditorList[I].FileName);
+          MainForm.EditorList[I].InitCompletion;
+        end;
+        PaintNow;
+        Times := Times + Format('/apply %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+      finally
+        F.Free;
+      end;
+      Times := Times + Format('/free %d', [SW.ElapsedMilliseconds]);
+    end;
+    Note('Editor Options create/ok/apply/free');
+
+    // style change: what main does after the Environment Options OK, there and back
+    OldStyle := devData.Style;
+    if OldStyle = 4 then DarkStyle := 3 else DarkStyle := 4; // Windows10 BlackPearl
+    {$IFDEF CPUX64}
+    var Sampler := TStackSampler.Create;
+    try
+    {$ENDIF}
+    for Run := 1 to Runs do
+      for var Target in [DarkStyle, OldStyle] do begin
+        devData.Style := Target;
+        SW := TStopwatch.StartNew;
+        if Target > 0 then begin
+          TStyleManager.TrySetStyle(cDelphiStyle[Target]);
+          Times := Times + Format(' %d:set %d', [Target, SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+          MainForm.LoadThemeStyle;
+          Times := Times + Format('/icons %d', [SW.ElapsedMilliseconds]); SW := TStopwatch.StartNew;
+          MainForm.LoadStyle;
+        end else
+          TStyleManager.TrySetStyle(cDelphiStyle[0]);
+        Application.ProcessMessages;
+        PaintNow;
+        Times := Times + Format('/paint %d', [SW.ElapsedMilliseconds]);
+      end;
+    devData.Style := OldStyle;
+    Note('style set/icons/paint');
+    {$IFDEF CPUX64}
+      Sampler.Terminate;
+      Sampler.WaitFor;
+      var ProfileFile := TPath.Combine(TPath.GetTempPath, 'devcpp-profile-style.txt');
+      Sampler.SaveTo(ProfileFile);
+      fNotes.Add(Format('style change profile: %d samples in %s', [Sampler.Samples, ProfileFile]));
+    finally
+      Sampler.Free;
+    end;
+    {$ENDIF}
+
+    // Environment Options: create and free, and the file-association broadcasts its OK sends
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin
+      Env := TEnviroForm.Create(nil);
+      Env.Free;
+      Lap;
+    end;
+    Note('Environment Options create+free');
+    SW := TStopwatch.StartNew;
+    for Run := 1 to Runs do begin
+      for I := 1 to AssociationsCount do
+        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nil, nil); // FileAssocs.RefreshIcons: Associate/Unassociate send one each
+      Lap;
+    end;
+    Note(Format('OK''s %d association broadcasts', [AssociationsCount]));
+
+    e.Text.Modified := False;
+    MainForm.EditorList.CloseAll;
+  except
+    on E: Exception do
+      Result := Failed(E);
+  end;
 end;
 
 end.

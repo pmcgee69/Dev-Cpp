@@ -860,15 +860,21 @@ end;
 
 procedure SaveOptions;
 begin
-  devData.SaveSelf;
-  devDirs.SaveSettings;
-  // devCompiler saving is done by CompOptForm
-  devEditor.SaveSettings;
-  devCodeCompletion.SaveSettings;
-  devClassBrowsing.SaveSettings;
-  devExternalPrograms.SaveSettings;
-  devFormatterAStyle.SaveSettings;
-  devFormatterClang.SaveSettings;
+  // One write of devcpp.ini, not a rewrite of the whole file per key
+  devData.BeginUpdate;
+  try
+    devData.SaveSelf;
+    devDirs.SaveSettings;
+    // devCompiler saving is done by CompOptForm
+    devEditor.SaveSettings;
+    devCodeCompletion.SaveSettings;
+    devClassBrowsing.SaveSettings;
+    devExternalPrograms.SaveSettings;
+    devFormatterAStyle.SaveSettings;
+    devFormatterClang.SaveSettings;
+  finally
+    devData.EndUpdate;
+  end;
 end;
 
 procedure DestroyOptions;

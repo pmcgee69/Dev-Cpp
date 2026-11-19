@@ -63,7 +63,7 @@ implementation
 uses
   Main, EditorList, Editor, Version, System.Diagnostics, System.IOUtils, System.StrUtils,
   System.TypInfo, SynEditTextBuffer, Vcl.Themes, EditorOptFrm, EnviroFrm, DataFrm, devCFG,
-  FileAssocs, ShlObj;
+  FileAssocs, ShlObj, System.Generics.Collections, Messages;
 
 function TestSwitchGiven(out ResultFile, Selection: String): Boolean;
 begin
@@ -867,6 +867,168 @@ begin
   Result := {TestEditorList and }TestEditor;
 end;
 
+{$IFDEF CPUX64}
+// A sampling profiler for the perf test: a thread that suspends the main thread about once a
+// millisecond, walks its stack with the system's unwinder (.pdata, which Delphi's Win64 code has
+// too) and resumes it. SaveTo writes one line per sample, innermost frame first: this exe's frames
+// as code offsets (as the test switch reports them; delfcpp-tools\profile.ps1 names them from the
+// .map), others as their module's name. While the main thread is suspended the sampler allocates
+// nothing and raises nothing (the main thread may hold the heap's lock): its buffer is
+// preallocated and every stack read is checked against the main thread's stack first.
+
+function RtlLookupFunctionEntry(ControlPc: UInt64; out ImageBase: UInt64;
+  HistoryTable: Pointer): Pointer; stdcall; external kernel32;
+function RtlVirtualUnwind(HandlerType: DWORD; ImageBase, ControlPc: UInt64; FunctionEntry: Pointer;
+  ContextRecord: PContext; out HandlerData: Pointer; out EstablisherFrame: UInt64;
+  ContextPointers: Pointer): Pointer; stdcall; external kernel32;
+function timeBeginPeriod(uPeriod: UINT): UINT; stdcall; external 'winmm.dll';
+function timeEndPeriod(uPeriod: UINT): UINT; stdcall; external 'winmm.dll';
+function GetModuleHandleEx(dwFlags: DWORD; lpModuleName: PChar; out phModule: HMODULE): BOOL;
+  stdcall; external kernel32 name 'GetModuleHandleExW';
+const
+  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT = 2;
+  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS = 4;
+
+type
+  TStackSampler = class(TThread)
+  private const
+    MaxDepth = 64;
+  private
+    fTarget: THandle;
+    fStackLo, fStackHi: UInt64;  // the main thread's stack: its reservation
+    fBuf: TArray<UInt64>;        // per sample: the frame count, then the frames
+    fUsed: Integer;
+    fSamples: Integer;
+    fContextMem: Pointer;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create;          // call on the thread to sample
+    destructor Destroy; override;
+    procedure SaveTo(const FileName: String);
+    property Samples: Integer read fSamples;
+  end;
+
+constructor TStackSampler.Create;
+var
+  Here: Integer;
+  Info: TMemoryBasicInformation;
+begin
+  if not DuplicateHandle(GetCurrentProcess, GetCurrentThread, GetCurrentProcess, @fTarget,
+    0, False, DUPLICATE_SAME_ACCESS) then
+    RaiseLastOSError;
+  VirtualQuery(@Here, Info, SizeOf(Info));
+  fStackLo := UInt64(Info.AllocationBase);
+  fStackHi := UInt64(Info.BaseAddress) + Info.RegionSize;
+  SetLength(fBuf, 4 * 1024 * 1024); // 32 MB: about a minute of samples at full depth
+  GetMem(fContextMem, SizeOf(TContext) + 16);
+  inherited Create(False);
+  Priority := tpTimeCritical;
+end;
+
+destructor TStackSampler.Destroy;
+begin
+  inherited; // terminates and waits
+  FreeMem(fContextMem);
+  CloseHandle(fTarget);
+end;
+
+procedure TStackSampler.Execute;
+var
+  Ctx: PContext;
+  Start, N: Integer;
+  PC, Base, Frame: UInt64;
+  Entry, Handler: Pointer;
+begin
+  Ctx := PContext((NativeUInt(fContextMem) + 15) and not NativeUInt(15)); // CONTEXT is 16-aligned
+  timeBeginPeriod(1);
+  try
+    while not Terminated do begin
+      Sleep(1);
+      if fUsed + MaxDepth + 1 > Length(fBuf) then
+        Break;
+      if SuspendThread(fTarget) = DWORD(-1) then
+        Break;
+      try
+        FillChar(Ctx^, SizeOf(TContext), 0);
+        Ctx.ContextFlags := CONTEXT_FULL;
+        if GetThreadContext(fTarget, Ctx^) then begin
+          Start := fUsed;
+          Inc(fUsed);
+          N := 0;
+          while (N < MaxDepth) and (Ctx.Rip <> 0) and (Ctx.Rsp >= fStackLo) and (Ctx.Rsp + 8 <= fStackHi) do begin
+            PC := Ctx.Rip;
+            fBuf[fUsed] := PC;
+            Inc(fUsed);
+            Inc(N);
+            Entry := RtlLookupFunctionEntry(PC, Base, nil);
+            if Entry = nil then begin // a leaf function: its return address is at the top
+              Ctx.Rip := PUInt64(Ctx.Rsp)^;
+              Ctx.Rsp := Ctx.Rsp + 8;
+            end else
+              RtlVirtualUnwind(0, Base, PC, Entry, Ctx, Handler, Frame, nil);
+          end;
+          fBuf[Start] := N;
+          Inc(fSamples);
+        end;
+      finally
+        ResumeThread(fTarget);
+      end;
+    end;
+  finally
+    timeEndPeriod(1);
+  end;
+end;
+
+procedure TStackSampler.SaveTo(const FileName: String);
+var
+  Lines: TStringList;
+  Modules: TDictionary<HMODULE, String>;
+  I, K, N: Integer;
+  Line: String;
+  Addr: UInt64;
+  Module: HMODULE;
+  Name: array[0..MAX_PATH] of Char;
+  Code, CodeEnd: UInt64;
+begin
+  Code := CodeStart;
+  CodeEnd := UInt64(HInstance) + PImageNtHeaders(NativeUInt(HInstance) +
+    NativeUInt(PImageDosHeader(HInstance)._lfanew)).OptionalHeader.SizeOfImage;
+  Lines := TStringList.Create;
+  Modules := TDictionary<HMODULE, String>.Create;
+  try
+    I := 0;
+    while I < fUsed do begin
+      N := fBuf[I];
+      Line := '';
+      for K := 1 to N do begin
+        Addr := fBuf[I + K];
+        if (Addr >= Code) and (Addr < CodeEnd) then
+          Line := Line + Format(' %x', [Addr - Code])
+        else begin
+          Module := 0;
+          if not GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS or
+            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, PChar(Addr), Module) then
+            Module := 0;
+          if not Modules.ContainsKey(Module) then
+            if (Module <> 0) and (GetModuleFileName(Module, Name, Length(Name)) > 0) then
+              Modules.Add(Module, ExtractFileName(Name))
+            else
+              Modules.Add(Module, '?');
+          Line := Line + ' ' + Modules[Module];
+        end;
+      end;
+      Lines.Add(Trim(Line));
+      Inc(I, N + 1);
+    end;
+    Lines.SaveToFile(FileName, TEncoding.UTF8);
+  finally
+    Modules.Free;
+    Lines.Free;
+  end;
+end;
+{$ENDIF}
+
 constructor TTestClass.Create;
 begin
   fNotes := TStringList.Create;
@@ -958,6 +1120,10 @@ begin
     // style change: what main does after the Environment Options OK, there and back
     OldStyle := devData.Style;
     if OldStyle = 4 then DarkStyle := 3 else DarkStyle := 4; // Windows10 BlackPearl
+    {$IFDEF CPUX64}
+    var Sampler := TStackSampler.Create;
+    try
+    {$ENDIF}
     for Run := 1 to Runs do
       for var Target in [DarkStyle, OldStyle] do begin
         devData.Style := Target;
@@ -976,6 +1142,67 @@ begin
       end;
     devData.Style := OldStyle;
     Note('style set/icons/paint');
+    {$IFDEF CPUX64}
+      Sampler.Terminate;
+      Sampler.WaitFor;
+      var ProfileFile := TPath.Combine(TPath.GetTempPath, 'devcpp-profile-style.txt');
+      Sampler.SaveTo(ProfileFile);
+      fNotes.Add(Format('style change profile: %d samples in %s', [Sampler.Samples, ProfileFile]));
+    finally
+      Sampler.Free;
+    end;
+    {$ENDIF}
+
+    // The user's flow: Environment Options open, a dark style picked, OK. Its btnOkClick isn't
+    // called: besides the style it re-registers the file associations from the (test) config,
+    // which could remove the user's real ones. Only its style step is: TrySetStyle while the
+    // dialog is still up. Then the dialog closes and main applies the icons and the style.
+    // V1 and V2 are candidate orders; each runs Runs times, from OldStyle to DarkStyle.
+    for var Variant := 0 to 2 do begin
+      for Run := 1 to Runs do begin
+        Env := TEnviroForm.Create(nil);
+        Env.Show;
+        Application.ProcessMessages;
+        SW := TStopwatch.StartNew;
+        devData.Style := DarkStyle;
+        case Variant of
+          0: begin // as now
+              TStyleManager.TrySetStyle(cDelphiStyle[DarkStyle]); // in EnviroForm.btnOkClick
+              Env.Free;
+              MainForm.LoadThemeStyle;
+              MainForm.LoadStyle;
+            end;
+          1: begin // the dialog gone first; icons, then the style
+              Env.Free;
+              MainForm.LoadThemeStyle;
+              MainForm.LoadStyle;
+            end;
+          2: begin // as 1, the main window not redrawn until both are done
+              Env.Free;
+              SendMessage(MainForm.Handle, WM_SETREDRAW, WPARAM(False), 0);
+              try
+                MainForm.LoadThemeStyle;
+                MainForm.LoadStyle;
+              finally
+                SendMessage(MainForm.Handle, WM_SETREDRAW, WPARAM(True), 0);
+              end;
+            end;
+        end;
+        Application.ProcessMessages; // the posted recreate
+        PaintNow;
+        Times := Times + Format(' %d', [SW.ElapsedMilliseconds]);
+        Assert(IsWindowVisible(MainForm.Handle));
+        // back, untimed
+        devData.Style := OldStyle;
+        if OldStyle > 0 then begin
+          MainForm.LoadThemeStyle;
+          MainForm.LoadStyle;
+        end else
+          TStyleManager.TrySetStyle(cDelphiStyle[0]);
+        Application.ProcessMessages;
+      end;
+      Note(Format('user flow to style %d, V%d', [DarkStyle, Variant]));
+    end;
 
     // Environment Options: create and free, and the file-association broadcasts its OK sends
     SW := TStopwatch.StartNew;

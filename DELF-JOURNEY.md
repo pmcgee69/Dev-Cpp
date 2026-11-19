@@ -313,3 +313,27 @@ Updated as units land; the short version of what this project shows.
   Branch `fix-completion-overtype` (`08e0afc`), tested by hand by the user, pushed and merged
   into `latest` (`f45ebe8`); on `dev64` (`b663d9f`) and here (`cb4c110`), whose builds pass
   `editor` and `undo`.
+- **19 Nov 2026, UI speed.** The user's screen recording (104 s) named four slow spots: startup,
+  changing the style, and closing Editor Options twice (the line-highlight and colour changes),
+  *"I'd say 2 second delay maybe"*. A frame-change timeline from the video gave: style change
+  ~2.5 s from OK to fully painted, in pieces; Editor Options OK ~2 s of frozen window. To
+  measure inside rather than guess, a `perf` test (`-tests perf`) times each part, three runs,
+  and reports even when it passes; every run now notes its startup time too.
+  - **Editor Options OK: 1,650 ms, all of it `SaveOptions`.** `TIniFile` writes each key with
+    `WritePrivateProfileString`, which rewrites and flushes the whole `devcpp.ini`; a save is a
+    few hundred keys. `TConfigData.BeginUpdate`/`EndUpdate` now buffer in a `TMemIniFile` and
+    write once: **45 ms**. The file is the same apart from a blank line between sections
+    (checked by diff, old build against new). Program exit runs the same save, so it gains too.
+  - My first suspect was wrong: every Environment Options OK sends 9 `SHCNE_ASSOCCHANGED`
+    broadcasts (one per file type), but they cost 1–3 ms. Measured before blaming.
+  - **Style change: ~0.7 s per switch** in the test (Win32's first: 1.3 s): `LoadThemeStyle`
+    ~200 ms (SVG icon lists re-rendered with a new `FixedColor`), the repaint ~450 ms. The
+    piecemeal painting the user saw is the VCL style engine repainting control by control. Not
+    fixed yet.
+  - Startup to tests: ~0.8 s Win64, ~2 s Win32 (the test's own window). Reads still go key by key
+    through the same API (`GetPrivateProfileString`), which re-reads the file each time: next.
+
+  `dev64` `820a1e8` (test), `de971d4` (fix); here `7032245`, `942331b`. `undo` and `perf` pass
+  on both; `editorlist` still fails at error 14's stale focus check. A lesson: my `sed -i` under
+  Git Bash turned `Tests.pas` CRLF to LF (a 1,800-line diff); caught in the commit stat, the
+  commits redone. Text edits with the Edit tool, as the rule says.

@@ -1158,7 +1158,7 @@ begin
     // which could remove the user's real ones. Only its style step is: TrySetStyle while the
     // dialog is still up. Then the dialog closes and main applies the icons and the style.
     // V1 and V2 are candidate orders; each runs Runs times, from OldStyle to DarkStyle.
-    for var Variant := 0 to 2 do begin
+    for var Variant := 0 to 3 do begin
       for Run := 1 to Runs do begin
         Env := TEnviroForm.Create(nil);
         Env.Show;
@@ -1186,6 +1186,10 @@ begin
               finally
                 SendMessage(MainForm.Handle, WM_SETREDRAW, WPARAM(True), 0);
               end;
+            end;
+          3: begin // as the program does it now: the dialog gone, then ApplyStyleChange (covered)
+              Env.Free;
+              MainForm.ApplyStyleChange;
             end;
         end;
         Application.ProcessMessages; // the posted recreate

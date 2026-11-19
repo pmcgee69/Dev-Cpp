@@ -306,3 +306,10 @@ Updated as units land; the short version of what this project shows.
   PR branches). `gh --web` didn't open a browser. The PR draft is with the user's others: Delf
   `experiments/legacy-devcpp-style/devcpp-pr-undo.md`, waiting for the hand tests (symbol
   completion on and off). Error 30 (the highlighter) is held back for its own issue.
+- **18-19 Nov 2026.** The user's hand walkthrough, before and after: their notes found a fourth
+  editor bug, in symbol completion: `)` stepped over the auto-inserted `)` only if typed straight
+  after the `(`, so `(1` then `)` gave `(1))`. Fixed with a count of the closers completion
+  inserts on the line (the user: *"if I type ')' it should just replace the ')' that's there"*).
+  Branch `fix-completion-overtype` (`08e0afc`), tested by hand by the user, pushed and merged
+  into `latest` (`f45ebe8`); on `dev64` (`b663d9f`) and here (`cb4c110`), whose builds pass
+  `editor` and `undo`.

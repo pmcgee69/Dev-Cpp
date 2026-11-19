@@ -28,6 +28,12 @@ type
   TConfigData = class(TPersistent)
   private
     fIni: TIniFile;
+    // DelfCpp: while BeginUpdate is in force, writes go to this copy of the file in memory and
+    // EndUpdate saves it once. TIniFile writes through WritePrivateProfileString, which rewrites
+    // and flushes the whole file for every key: saving the options took 1.6 s that way.
+    fBuffer: TMemIniFile;
+    fUpdates: Integer;
+    function Writer: TCustomIniFile;
     function GetIniFileName: String;
     procedure SetIniFileName(const s: String);
   public
@@ -37,6 +43,11 @@ type
 
     procedure ReadSelf;
     procedure SaveSelf;
+
+    // Batch writes: the file is written once, at the outermost EndUpdate. Reads in between see the
+    // file as it was. Nests.
+    procedure BeginUpdate;
+    procedure EndUpdate;
 
     procedure EraseSection(const name: String);
 
@@ -110,6 +121,7 @@ end;
 
 destructor TConfigData.Destroy;
 begin
+  fBuffer.Free;
   if Assigned(fIni) then
     fIni.free;
   inherited Destroy;
@@ -121,6 +133,33 @@ begin
     result := fIni.FileName
   else
     result := '';
+end;
+
+function TConfigData.Writer: TCustomIniFile;
+begin
+  if Assigned(fBuffer) then
+    Result := fBuffer
+  else
+    Result := fIni;
+end;
+
+procedure TConfigData.BeginUpdate;
+begin
+  Inc(fUpdates);
+  if (fUpdates = 1) and Assigned(fIni) then
+    // no encoding given: the file's own if it has a BOM, else ANSI, as the profile API writes
+    fBuffer := TMemIniFile.Create(fIni.FileName);
+end;
+
+procedure TConfigData.EndUpdate;
+begin
+  Dec(fUpdates);
+  if (fUpdates = 0) and Assigned(fBuffer) then
+    try
+      fBuffer.UpdateFile;
+    finally
+      FreeAndNil(fBuffer);
+    end;
 end;
 
 procedure TConfigData.SetIniFileName(const s: String);
@@ -185,15 +224,15 @@ begin
         tkUString,
         tkString,
         tkLString,
-        tkWString: fINI.WriteString(Section, PropName, '"' + GetStrProp(Obj, PropName) + '"');
+        tkWString: Writer.WriteString(Section, PropName, '"' + GetStrProp(Obj, PropName) + '"');
 
       tkChar,
         tkEnumeration,
-        tkInteger: fINI.WriteInteger(Section, PropName, GetOrdProp(Obj, PropName));
+        tkInteger: Writer.WriteInteger(Section, PropName, GetOrdProp(Obj, PropName));
 
-      tkInt64: fINI.WriteString(Section, PropName, InttoStr(GetInt64Prop(Obj, PropName)));
+      tkInt64: Writer.WriteString(Section, PropName, InttoStr(GetInt64Prop(Obj, PropName)));
 
-      tkFloat: fINI.WriteString(Section, PropName, FloattoStr(GetFloatProp(Obj, PropName)));
+      tkFloat: Writer.WriteString(Section, PropName, FloattoStr(GetFloatProp(Obj, PropName)));
 
       tkClass: begin
           if TPersistent(GetOrdProp(Obj, PropName)) is TStrings then
@@ -246,9 +285,9 @@ begin
   EraseSection(key);
   for I := 0 to Pred(value.Count) do
     if Value.Names[I] = '' then // name/value stuff not found...
-      fIni.WriteString(key, IntToStr(I), value[I])
+      Writer.WriteString(key, IntToStr(I), value[I])
     else
-      fIni.WriteString(key, Value.Names[I], value.Values[Value.Names[I]]);
+      Writer.WriteString(key, Value.Names[I], value.Values[Value.Names[I]]);
 end;
 
 // fix without using StringList.DelimitedText:
@@ -308,23 +347,23 @@ end;
 
 procedure TConfigData.Write(const key: String; const entry: String; value: integer);
 begin
-  fIni.WriteInteger(Key, Entry, Value);
+  Writer.WriteInteger(Key, Entry, Value);
 end;
 
 procedure TConfigData.Write(const key: String; const entry: String; value: boolean);
 begin
-  fIni.WriteBool(Key, Entry, value);
+  Writer.WriteBool(Key, Entry, value);
 end;
 
 procedure TConfigData.Write(const key: String; const entry: String; const value: String);
 begin
-  fIni.WriteString(Key, Entry, Value);
+  Writer.WriteString(Key, Entry, Value);
 end;
 
 procedure TConfigData.EraseSection(const name: String);
 begin
-  if fIni.SectionExists(Name) then
-    fIni.EraseSection(Name);
+  if Writer.SectionExists(Name) then
+    Writer.EraseSection(Name);
 end;
 
 end.

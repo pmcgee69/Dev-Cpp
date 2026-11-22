@@ -1,20 +1,19 @@
-# DelfCpp: the journey, journal 2
+# DelfCpp: the journey, Chapter 2
 
-The second volume of DelfCpp's journal (the user, 22 Nov 2026: *"start a new journal 2"*).
-[Journal 1, `DELF-JOURNEY.md`](DELF-JOURNEY.md), holds the start: the principles, the branches,
+Journal 2 is **Chapter 2** of DelfCpp's journal (the user, 22 Nov 2026: *"start a new journal 2"*,
+then *"Journal 2 is chapter 2"*). [Chapter 1, `DELF-JOURNEY.md`](DELF-JOURNEY.md), holds the start: the principles, the branches,
 units 1-4 (IntList, EditorList, Instances, CppTokenizer), errors 1-32, the tests, the fixes,
 lessons, takeaways, the upstream PRs and its log to 20 Nov. Its principles still hold, and the
-numbering carries on: units from 5, errors from 33, the tally from journal 1's.
+numbering carries on: units from 5, errors from 33, the tally from Chapter 1's.
 
 **One of two journals** still (the user, 20 Nov): this is DelfCpp's, the Dev-C++ fork. Delf's
 own process record is the Delf repo's `docs/lifetime-diagnostics-record.md`. A milestone goes in
 whichever it belongs to; one that is both goes in both, each pointing at the other.
 
 **A series** (the user, 22 Nov: *"I think this whole thing could be an ongoing series of videos.
-106 units. So new chapter for the journal here."*). From here the journal runs in **chapters, one
-per unit**, numbered by the unit (Chapter 5 is the fifth unit), each one an episode: what the
-unit is, the tests, what reading it found, pass 1, the fixes, what it says about Delf. The
-running tables stay at the top.
+106 units. So new chapter for the journal here."*, and *"Journal 2 is chapter 2"*). The journal
+runs in chapters, each its own file: Chapter 1 the first four units and the upstream work, this
+Chapter 2 from unit 5. Within a chapter, each unit has its own section in the log.
 
 ## Accidentally not breaking
 
@@ -25,20 +24,20 @@ happens to land on something harmless, a pointer to freed memory that happens ne
 through. Each stays here until a Delf idea makes the right version the natural one; the last
 column is for that idea, **open** until then (Claude's first thoughts marked as such).
 
-| # | Where | Why it works | What would break it | Ch. / error | Delf idea (later) |
+| # | Where | Why it works | What would break it | Found in | Delf idea (later) |
 |---|---|---|---|---|---|
-| A1 | `CppTokenizer.GetForInit` | A `String` function never assigns `Result`; Delphi hands the caller `''`, which is what it needs | A caller that passes a non-empty `Result` slot (Delphi's string results are hidden `var` parameters, so the old value can come back) | journal 1, error 25 (found by Rust) | Open. First thought: every path assigns `Result`, checked by delfc |
-| A2 | `CppTokenizer.SimplifyArgs` | Reads `Output[Length + 1]`, one past the end; Delphi's strings end in `#0`, which counts as blank | Range checks on (raises); a `TArray<Char>` or slice instead of a string (no `#0` there) | journal 1, error 26 (Rust) | Open. First thought: indexing that can't step past the end, or says so in its type |
-| A3 | `CppParser.InvalidateFile`, `ReProcessInheritance` | A deleted class's statement is disposed (the list owns it), but its address stays in `fInvalidatedStatements` and in other statements' `_InheritanceList`s until the reparse. Only compared, never read through | Any code that reads through one of those pointers before the reparse (a class browser hover, a debug dump), or a new statement allocated at the same address and compared as if it were the old one | Ch. 5 | Open. A lifetime question: what may still point at a statement when its list frees it |
+| A1 | `CppTokenizer.GetForInit` | A `String` function never assigns `Result`; Delphi hands the caller `''`, which is what it needs | A caller that passes a non-empty `Result` slot (Delphi's string results are hidden `var` parameters, so the old value can come back) | Chapter 1, error 25 (found by Rust) | Open. First thought: every path assigns `Result`, checked by delfc |
+| A2 | `CppTokenizer.SimplifyArgs` | Reads `Output[Length + 1]`, one past the end; Delphi's strings end in `#0`, which counts as blank | Range checks on (raises); a `TArray<Char>` or slice instead of a string (no `#0` there) | Chapter 1, error 26 (Rust) | Open. First thought: indexing that can't step past the end, or says so in its type |
+| A3 | `CppParser.InvalidateFile`, `ReProcessInheritance` | A deleted class's statement is disposed (the list owns it), but its address stays in `fInvalidatedStatements` and in other statements' `_InheritanceList`s until the reparse. Only compared, never read through | Any code that reads through one of those pointers before the reparse (a class browser hover, a debug dump), or a new statement allocated at the same address and compared as if it were the old one | Chapter 2, unit 5 | Open. A lifetime question: what may still point at a statement when its list frees it |
 
-Related but not the same kind: journal 1's **dormant** errors (13, 16-20, 24) and error 33 here are
+Related but not the same kind: Chapter 1's **dormant** errors (13, 16-20, 24) and error 33 here are
 bugs that bite on rarer input or a first caller; they're in the errors tables.
 
 ## Running tables
 
 ### Size
 
-Continuing journal 1's table (`delfcpp-tools/size.py . HEAD`).
+Continuing Chapter 1's table (`delfcpp-tools/size.py . HEAD`).
 
 | When | Own `.pas` | Own `.delf` | Own `.dfm` | Own `.dpr`+`.inc` | Tools (all kinds) | Bundled (all kinds) |
 |---|---|---|---|---|---|---|
@@ -56,7 +55,7 @@ of ~56,750 original lines, 4.1%).
 
 ### Errors found
 
-Same columns and "Found by" as journal 1.
+Same columns and "Found by" as Chapter 1.
 
 | # | Where | The bug | Effect | Found by | Fixed in |
 |---|---|---|---|---|---|
@@ -64,12 +63,12 @@ Same columns and "Found by" as journal 1.
 
 **Observed, not counted:** see *Accidentally not breaking* A3, above.
 
-**Tally:** journal 1's (Claude 23, dcc64 2, test 5, running it 1, Rust 1, Delf 0), plus
+**Tally:** Chapter 1's (Claude 23, dcc64 2, test 5, running it 1, Rust 1, Delf 0), plus
 Claude 1 here: **Claude 24**, the rest unchanged.
 
-## Chapters
+## Log
 
-### Chapter 5: StatementList (22 Nov 2026)
+### Unit 5: StatementList (22 Nov 2026)
 
 Chosen from the units with no form and few of
   Dev-C++'s own units used (the user: *"Next unit"*, then *"Go"*): the class browser's doubly

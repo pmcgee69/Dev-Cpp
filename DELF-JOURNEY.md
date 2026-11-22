@@ -1,4 +1,4 @@
-# DelfCpp: the journey (Dev-C++ into Delf)
+# DelfCpp: the journey (Dev-C++ into Delf), Chapter 1
 
 A log of moving Dev-C++ to 64-bit and then, unit by unit, into **Delf** (Delphi with a stricter
 type system; delfc translates `.delf` to `.pas`). Kept as it happens: what was changed, what
@@ -12,9 +12,9 @@ its experiments, and Dev-C++ as delfc's real code). A milestone goes in whicheve
 one that is both goes in both, each pointing at the other.
 
 
-**Continued in [journal 2, `DELF-JOURNEY-2.md`](DELF-JOURNEY-2.md)** (the user, 22 Nov 2026:
-*"start a new journal 2"*), from unit 5, StatementList, and error 33. This volume closes at
-20 Nov.
+**Continued in [Chapter 2, `DELF-JOURNEY-2.md`](DELF-JOURNEY-2.md)** (the user, 22 Nov 2026:
+*"start a new journal 2"*, *"Journal 2 is chapter 2"*), from unit 5, StatementList, and error 33.
+This chapter closes at 20 Nov.
 
 ## Principles (the user, 18 Nov 2026)
 
@@ -421,4 +421,4 @@ Updated as units land; the short version of what this project shows.
     and body; `gh --web` hadn't opened one); the PR not created yet. Next: its number into the
     style PR.
   - `delfcpp-units` pushed to the fork for the first time, with this entry.
-- **Continued in [journal 2](DELF-JOURNEY-2.md)**, from 22 Nov 2026.
+- **Continued in [Chapter 2](DELF-JOURNEY-2.md)**, from 22 Nov 2026.

@@ -18,7 +18,8 @@ uses
   Test.IntList in 'Test.IntList.pas',
   Test.Instances in 'Test.Instances.pas',
   Test.Utils in 'Test.Utils.pas',
-  Test.EditorList in 'Test.EditorList.pas';
+  Test.EditorList in 'Test.EditorList.pas',
+  Test.StatementList in 'Test.StatementList.pas';
 
 var
   Runner: ITestRunner;

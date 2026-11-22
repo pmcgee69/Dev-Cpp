@@ -33,6 +33,34 @@ column is for that idea, **open** until then (Claude's first thoughts marked as 
 Related but not the same kind: Chapter 1's **dormant** errors (13, 16-20, 24) and error 33 here are
 bugs that bite on rarer input or a first caller; they're in the errors tables.
 
+## Every error along the way
+
+The user, 22 Nov: *"We want ALL THE ERRORS recorded"*. Beside the code's bugs (the errors
+table, 33 on), **everything that went wrong in doing the work**: compile failures, a tool
+refusing, a script's slip, Claude's own mistakes and misreadings, each with who made it, what
+caught it and what it cost. Numbered W1, W2, ... across the chapter.
+
+**Who**: *Claude* (a slip or a wrong reading), *dcc* (the Delphi compiler), *delfc*, *tool*
+(git, sed, Python, the test runner), *by design* (a refusal that was right).
+
+| # | Unit | What went wrong | Who | Caught by | Fixed by | Cost |
+|---|---|---|---|---|---|---|
+| W1 | 5 | The test's header cited "error 30" for `DeleteFromTo`; Chapter 1's table already ran to 32. Corrected to 34 from a quick grep that read the wrong table (the tests table's rows), then to 33 | Claude | reading the errors table's last row | the header's number (`sed`), before the first commit | two corrections, nothing committed wrong |
+| W2 | 5 | `sed -i` on the CRLF `run-tests.cmd` (to add the unit) rewrote all 208 lines' endings; the file was copied to `dev64` like that | tool (Git Bash's `sed`), Claude for using it on a CRLF file | `git diff --stat`: 208 lines changed for a one-word edit | both copies restored with `git checkout`, the edit redone on the bytes in Python | one rerun |
+| W3 | 5 | **Win64 build failed**: `E2532 Couldn't infer generic type argument` at `Assert.AreEqual(Ref.Count, Got, …)`: `TList<T>.Count` is `NativeInt` on Win64, `Got` an `Integer`. **A repeat**: Chapter 1's Lessons already says *"`Assert.AreEqual(6, List.Count)` doesn't compile for Win64"* | dcc, Claude (the lesson was in the journal, not applied) | the runner: *original Win64: BUILD FAILED*, its `build.log` | `var N: Integer := Ref.Count` | one build; a lesson written down but not read |
+| W4 | 5 | The first fix tried was `const N: Integer = Ref.Count` (an inline typed constant from a runtime value); replaced with `var … :=` before it was compiled, so never tested whether dcc takes it | Claude | Claude, rereading before the run | `var` | none; left unknown |
+| W5 | 5 | delfc refused to write `StatementList.pas`: *exists and isn't delfc's output; not overwritten* | by design: delfc protects a `.pas` it didn't write | delfc | `--force`, right for a unit's first conversion only | one rerun; to remember for every new unit |
+| W6 | 5 | `size.py` run without its arguments: `IndexError` | Claude (didn't read its usage line first) | Python | `size.py . HEAD` | one rerun |
+| W7 | 5 | Python `SyntaxWarning: invalid escape sequence '\C'` in the scripts that wrote the journal (`VCL\ClassBrowsing` in a plain string). Harmless here, `\C` kept as written; it would not be for `
+`, `	` | Claude | Python's warning | checked the written rows by `grep`: correct | none; raw strings next time |
+| W8 | 5 | The first full run reported *"A fixed version failed or did not build"* when only the original had been run, and failed (W3) | tool (the runner's message covers any failure) | reading the per-version lines | nothing changed | none; the message misleads when one version is run |
+| W9 | – | Journal 2 (and the reverted journal 1) written with CRLF over files git stores with LF: the whole file showed as changed | Claude | `git diff --stat` (867 lines) and `git diff --ignore-cr-at-eol` (the real 9) | `sed -i 's/
+$//'` before committing | one check |
+| W10 | – | StatementList's entries went into journal 1; the user then asked for a journal 2 (*"I forgot to say start a new journal 2"*) | not an error of the work: the instruction came after | the user | the entries moved to journal 2, journal 1 restored to 20 Nov | one restructure |
+| W11 | – | *"new chapter for the journal here"* read as a chapter per unit (Chapter 5 = StatementList) | Claude (the reading was stated, but not asked) | the user: *"Journal 2 is chapter 2"* | units made sections ("Unit 5"), the journals Chapters 1 and 2; the memory note corrected | one commit, `8f1333d` |
+| W12 | 5 | Not an error, recorded as one to check: the original passing the seven characterization tests could have hidden a test too weak to fail. It does fail where it should: the three regressions (*Expected [3] but got [5]*, *[0] but got [2]*) | – | – | – | – |
+| W13 | – | **W7 again**, while writing W7's own row: the script holding this table raised the same `SyntaxWarning` (a `\C` in a plain string). The rows came out right | Claude | Python's warning | this row written with a raw string | none; a repeat in the same minute |
+
 ## Running tables
 
 ### Size

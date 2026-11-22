@@ -196,18 +196,23 @@ begin
   Result := fCount;
 end;
 
-function TStatementList.DeleteFromTo(FromNode, ToNode: PStatementNode): Integer; // TODO: merge with Delete?
+// From FromNode to ToNode, both deleted; with ToNode nil, to the end. Until 22 Nov a `break`
+// before the test left it deleting FromNode alone, and the lines after it would have read the
+// freed node's NextNode (DELF-JOURNEY.md error 33)
+function TStatementList.DeleteFromTo(FromNode, ToNode: PStatementNode): Integer;
 var
-  Node: PStatementNode;
+  Node, NextNode: PStatementNode;
+  Last: Boolean;
 begin
   Node := FromNode;
   while Assigned(Node) do begin
+    NextNode := Node^.NextNode; // read before the node is freed
+    Last := Node = ToNode;
     OnNodeDeleting(Node); // updates information about linked list
     DisposeNode(Node);
-    break;
-    if Node = ToNode then
+    if Last then
       break;
-    Node := Node^.NextNode;
+    Node := NextNode;
   end;
   Result := fCount;
 end;

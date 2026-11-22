@@ -112,3 +112,12 @@ Chosen from the units with no form and few of
   builds pass all 72, Win32 and Win64.** Also seen: `InvalidateFile` leaves freed statements'
   addresses in `fInvalidatedStatements` and in others' inheritance lists, compared but never read
   (*Accidentally not breaking* A3). Five units of 106 in Delf, 4.1% of the original lines.
+
+### Handover (22 Nov 2026)
+
+The user moved to another Claude account (*"i will need to change to a new claude acct to cont
+working ... pls prepare everything to hand over to it"*). Where everything stands, DelfCpp
+included (next unit suggested: `CharUtils`; the PRs; the tests), is in the Delf repo's
+`docs/handover-2026-11-22.md`, with the standing rules and every memory note copied in full; the
+day's work as a transcript in Delf's `docs/milestones/2026-11-22-delfcpp-unit5-delfnav`. This
+chapter goes on from here.

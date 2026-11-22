@@ -52,9 +52,11 @@ vcl-styles-utils, DDetours, Abbrevia) and the separate tools (Packman, PackMaker
 | `delfcpp-units` after IntList | 106 files, 57,189 lines¹ | 1 file, 418 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
 | `delfcpp-units` after EditorList | 106 files, 57,201 lines¹ | 2 files, 1,068 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
 | `delfcpp-units` after Instances | 106 files, 57,210 lines¹ | 3 files, 1,235 lines | 68 files, 45,690 lines | 23 files, 1,530 lines | unchanged | unchanged |
+| `delfcpp-units` after StatementList (CppTokenizer included) | 106 files, 58,112 lines¹ | 5 files, 2,290 lines | 68 files, 45,690 lines | 22 `.dpr` (204) + 1 `.inc` (1,326)² | unchanged | unchanged |
 
-¹ Includes the generated `.pas` of each Delf unit. Units in Delf so far: **3 of 106** (1,264
-of ~56,750 original lines, 2.2%).
+¹ Includes the generated `.pas` of each Delf unit. Units in Delf so far: **5 of 106** (2,299
+of ~56,750 original lines, 4.1%; was 3, 1,264, 2.2% after Instances).
+² `delfcpp-tools/size.py . HEAD`, 22 Nov, which counts `.dpr` and `.inc` apart.
 
 ## Files attacked
 
@@ -64,6 +66,7 @@ of ~56,750 original lines, 2.2%).
 | 2 | `EditorList` | 661 → 650 | `b3437a0` | `6ea85d8` | Dev-C++'s own `TestEditorList` (switched off upstream), run in both 64-bit builds: same result in each (see below) |
 | 3 | `Instances` | 158 → 167 | `dee5f73` (pass 1), `76f8a86` (fixes) | `1197288` | Pass 1 the door: delfc's output = the original byte for byte, but the marker comment. Then builds, both branches and platforms; `WM_COPYDATA` sent to the 64-bit build, with and without a terminator |
 | 4 | `VCL\ClassBrowsing\CppTokenizer` | 804 → 815 | `d79bf6b` (pass 1), `289ae81` (fixes, tests) | `16f2ad6` | **The first unit with committed tests**: `delfcpp-tests`, 19 DUnitX tests, the same source run against the original, `dev64` and Delf, Win32 + Win64 |
+| 5 | `VCL\ClassBrowsing\StatementList` | 231 → 238 | `a7d259a` (pass 1), `3f0ea9c` (fix) | `c5ad900` | Pass 1 the door: delfc's output = the original byte for byte, but the marker. Tests first (`15f4eea`, `d661eec`): 10 DUnitX tests, among them 200,000 random operations against a `TList` with the links walked both ways; the same source on the original, `dev64` and Delf, Win32 + Win64 |
 
 ## Errors found
 
@@ -111,17 +114,25 @@ delfc), *dcc64* (the Delphi compiler refusing it for Win64), *test* (a test show
 | 30 | `SynHighlighterCpp.InitIdent` | The keyword table was regenerated (91 keywords, hash mod 331) but `FuncAsm` still sits on the old table's slots 70, 191 and 189, now empty, and the function table kept the old size (343), so it reads past `KeyIndices` | Live: an identifier hashing there (`df`, `mo`, `eeee`: 165 of the 18,278 of one to three letters) calls `FuncAsm(-1)` and reads `KeyWords[-1]`. That's garbage on Win32 and **an access violation on Win64 while typing**. `asm` itself (slot 250) never got `FuncAsm` | test: the test switch, once #29 was fixed; the stack from its exact Win64 unwind. Not reported upstream: their releases are 32-bit, where it reads garbage quietly. It began with the fix for #47 ("Some C++ keywords not highlighted", 2020: the maintainer re-patched the keywords after upgrading SynEdit, `cb4a4a5`, 29 Oct 2020) | `f4eb82f`, `588493d` |
 | 31 | `Editor.TSynEditEx.CommandProcessor` | Dev-C++'s extra indent after `{` or `:` on Enter, and the indent it removes when `}` is typed, are written straight into `Lines`, with no undo record | Live: undo and redo put indentation in the wrong places | test: `TestUndo`, the redo cycles of #252 (the undo and redo records written out) | `209e997`, `1ff9c40` |
 | 32 | `SynEdit.RedoItem` | Redo replays a line break through `CommandProcessor(ecLineBreak)`, so auto-indent and the editor's additions run again, and the redo records after it restore that indent too | Live: every redo-all leaves stray tabs (the reports' "redo strays even further", #192, #252, #273) | test: `TestUndo` | `d7d0bf4`, `f3caeef` |
+| 33 | `StatementList.DeleteFromTo` | A `break` straight after the first node's deletion, before the loop's `if Node = ToNode` test: it deletes `FromNode` alone, whatever `ToNode` is. The lines after the `break` are unreachable, and would read the freed node's `NextNode` if the `break` were taken out | Latent: nothing in Dev-C++ calls it (the parser deletes node by node). A caller would get a list with the rest of the range still in it | Claude, reading the unit; the tests confirmed it (the original deletes one node of a range of 3 or 6). delfc said nothing: Delf has no rule for statements after an unconditional `break` | `3f0ea9c`, `c5ad900` |
 
 **Not bugs, but made explicit by a Delf rule:** `IntList.Add`'s `case` on `TDuplicates` had no
 `dupAccept` arm (the fall-through was right). Delf's `match` must cover every value, so the
 arm is now written (*Delf*; `dev64` states it too).
+
+**Observed, not counted (22 Nov, StatementList):** `CppParser.InvalidateFile` adds a class
+statement to `fInvalidatedStatements` and then deletes its node; the list owns its statements, so
+the statement is disposed and `fInvalidatedStatements` holds its address. Other statements'
+`_InheritanceList`s still point at it too. `ReProcessInheritance` only compares those addresses
+(to find the files to reparse), never reads through them, so nothing breaks; but valid statements
+carry pointers to freed ones until the reparse. A lifetime story Delf's diagnostics are about.
 
 **Observed, not counted:** in a raw header, an `#include` line with a `:` in a trailing comment
 (`// … std::allocator.`) makes `StrToInt` raise, and the file's remaining tokens are lost (21 of
 GCC's 3,137 files). The class browser tokenizes the preprocessor's output, not raw headers, so
 whether it bites there is unchecked.
 
-**Tally so far:** Claude 23 (one suspected), dcc64 2, test 5, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
+**Tally so far:** Claude 24 (one suspected), dcc64 2, test 5, running it 1, Rust 1, Delf 0 (rules made correct code explicit). Delf's
 part has been the occasion: rewriting a unit means reading all of it.
 
 ## Tests (delfcpp-tests)
@@ -416,3 +427,17 @@ Updated as units land; the short version of what this project shows.
     and body; `gh --web` hadn't opened one); the PR not created yet. Next: its number into the
     style PR.
   - `delfcpp-units` pushed to the fork for the first time, with this entry.
+- **22 Nov 2026, StatementList, the fifth unit.** Chosen from the units with no form and few of
+  Dev-C++'s own units used (the user: *"Next unit"*, then *"Go"*): the class browser's doubly
+  linked list of parsed statements, hand-managed pointers. **Tests first**: `Test.StatementList`,
+  10 tests, among them 200,000 random operations against a `TList` (links walked both ways every
+  97 operations), on both branches (`15f4eea`, `d661eec`); 72 tests in all now. Reading it found
+  **error 33**: `DeleteFromTo` deletes only its first node (a `break` before its test), latent
+  since nothing calls it. The original fails the three new regressions (5 left of 6 where 3 were
+  meant; 2 of 3 where none). **Pass 1** (`a7d259a`): the door exact, delfc's output the original
+  but the marker; delfc said nothing of the unreachable lines (a rule Delf could have). The fix,
+  the next node read before the node is freed, the last one known before it is: `dev64`
+  `c5ad900`, here `3f0ea9c`, delfc's output equal to `dev64`'s but the marker. **All four fixed
+  builds pass all 72, Win32 and Win64.** Also seen: `InvalidateFile` leaves freed statements'
+  addresses in `fInvalidatedStatements` and in others' inheritance lists, compared but never read
+  (above, "Observed"). Five units of 106 in Delf, 4.1% of the original lines.

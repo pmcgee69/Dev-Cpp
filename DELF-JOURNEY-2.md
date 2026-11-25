@@ -121,3 +121,38 @@ included (next unit suggested: `CharUtils`; the PRs; the tests), is in the Delf 
 `docs/handover-2026-11-22.md`, with the standing rules and every memory note copied in full; the
 day's work as a transcript in Delf's `docs/milestones/2026-11-22-delfcpp-unit5-delfnav`. This
 chapter goes on from here.
+
+### Interfaces, a unit at a time (25 Nov 2026)
+
+Not a unit: a design point, from Delf's work on interfaces (the classic references, in the Delf
+repo's `docs/interfaces-classic-refs.md`, which has this too). Asked whether the ideas for a
+better interface took interacting with Delphi code into account, the user: *"Well picture our job
+with DelfCpp ... progressively replacing older code while still working at every point"*, and of
+the answer, *"Just as you've put it .. in both."* As put:
+
+That settles it: interop isn't one constraint among several, it's the job. With DelfCpp, Dev-C++
+is converted a unit at a time and has to build and run at every step. So at any moment some units
+are Delf and the rest are Delphi, and interfaces and objects cross between them all the time.
+Seen that way:
+
+1. **Existing interfaces first, as they are.** A converted unit has to take and return the same
+   `IFoo`s and objects its Delphi neighbours use, unchanged. So the checks on today's interfaces
+   come first, since they need nothing new: Holger's rule 1, Daniel's crash, Hower's "free or
+   not", the hidden `_Release`, capture cycles. They work from the first converted unit.
+2. **The boundary moves, and the checks get stronger as it does.** Hower's question, "does any
+   code take an interface for it?", can only be answered for routines Delf can read. With one unit
+   converted, most of an object's routines are still Delphi, and Delf can only flag where it
+   crosses over. As more units are converted, more of each object's life is visible, and more
+   flags become checks. So the safety grows with the conversion, without needing a big
+   switch-over.
+3. **New kinds only where no Delphi code can reach them.** A bare interface (a) is only safe if
+   everything holding it is Delf. So it can't appear in a unit's public part while a Delphi unit
+   still uses that unit. delfc knows the project's units, so it could enforce that. In b,
+   "counted or bare" for Delphi's interfaces stays "unknown" at the boundary. That set shrinks as
+   the conversion goes on. c stays inside Delf until no Delphi neighbour needs the interface.
+4. **The output stays plain Delphi**, compiled together with the untouched units. That's already
+   how delfc works, so that part holds today.
+
+So the order for interfaces would be: checks on existing interfaces, then flags at the boundary,
+with the new kinds last and only behind the boundary. That's the same way DelfCpp itself
+proceeds, a unit at a time.
